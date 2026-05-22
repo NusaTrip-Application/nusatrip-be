@@ -1,0 +1,30 @@
+{
+	"include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts"],
+	"exclude": ["node_modules", "dist"],
+	"ts-node": {
+		"files": true
+	},
+	"compilerOptions": {
+		"typeRoots": ["./node_modules/@types", "./src/types"],
+		"rootDir": ".",
+		"outDir": "./dist",
+		"module": "commonjs",
+		"target": "esnext",
+		"types": [],
+		"lib": ["esnext"],
+		"sourceMap": true,
+		"declaration": true,
+		"declarationMap": true,
+
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+
+		"strict": true,
+		"jsx": "react-jsx",
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"noUncheckedSideEffectImports": true,
+		"moduleDetection": "force",
+		"skipLibCheck": true
+	}
+}

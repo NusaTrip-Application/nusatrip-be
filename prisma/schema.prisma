@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER  @map("user")
+  ADMIN @map("admin")
+}
+
+enum AccountStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+}
+
+enum VisibilityStatus {
+  PRIVATE   @map("private")
+  PUBLISHED @map("published")
+}
+
+enum DayOfWeek {
+  MONDAY    @map("monday")
+  TUESDAY   @map("tuesday")
+  WEDNESDAY @map("wednesday")
+  THURSDAY  @map("thursday")
+  FRIDAY    @map("friday")
+  SATURDAY  @map("saturday")
+  SUNDAY    @map("sunday")
+}
+
+enum PlaceCategoryEnum {
+  NATURE          @map("nature")
+  CULTURE_HISTORY @map("culture_history")
+  SHOPPING        @map("shopping")
+  FOOD_DRINKS     @map("food_drinks")
+  ENTERTAINMENT   @map("entertainment")
+  WELLNESS        @map("wellness")
+  FAMILY          @map("family")
+  ADVENTURE       @map("adventure")
+}
+
+model User {
+  userId                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fullName              String                      @map("full_name") @db.VarChar(150)
+  email                 String                      @unique @db.VarChar(255)
+  phoneNumber           String?                     @map("phone_number") @db.VarChar(30)
+  instagramUsername     String?                     @map("instagram_username") @db.VarChar(100)
+  passwordHash          String                      @map("password_hash") @db.VarChar(255)
+  role                  UserRole                    @default(USER) @map("role")
+  accountStatus         AccountStatus               @default(ACTIVE) @map("account_status")
+  profilePhotoUrl       String?                     @map("profile_photo_url")
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  updatedAt             DateTime                    @default(now()) @map("updated_at")
+
+  itineraries           Itinerary[]
+  reviews               PublishedItineraryReview[]
+  savedReferences       SavedReference[]
+  duplicatedLineages    DuplicatedItineraryLineage[]
+
+  @@map("users")
+}
+
+model Location {
+  locationId            String      @id @default(dbgenerated("gen_random_uuid()")) @map("location_id") @db.Uuid
+  locationName          String      @unique @map("location_name") @db.VarChar(120)
+  provinceName          String      @map("province_name") @db.VarChar(120)
+  description           String?
+  imageUrl              String?     @map("image_url")
+  isActive              Boolean     @default(true) @map("is_active")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @default(now()) @map("updated_at")
+
+  places                Place[]
+  itineraries           Itinerary[]
+
+  @@map("locations")
+}
+
+model Place {
+  placeId               String               @id @default(dbgenerated("gen_random_uuid()")) @map("place_id") @db.Uuid
+  locationId            String               @map("location_id") @db.Uuid
+  placeName             String               @map("place_name") @db.VarChar(180)
+  shortDescription      String?              @map("short_description")
+  address               String
+  priceRangeText        String?              @map("price_range_text") @db.VarChar(100)
+  priceLabel            String?              @map("price_label") @db.VarChar(50)
+  websiteUrl            String?              @map("website_url")
+  contactPhoneNumber    String?              @map("contact_phone_number") @db.VarChar(50)
+  ratingValue           Decimal?             @map("rating_value") @db.Decimal(3, 2)
+  ratingCount           Int                  @default(0) @map("rating_count")
+  googlePlaceId         String?              @unique @map("google_place_id") @db.VarChar(255)
+  isActive              Boolean              @default(true) @map("is_active")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @default(now()) @map("updated_at")
+
+  location              Location             @relation(fields: [locationId], references: [locationId])
+  images                PlaceImage[]
+  categoryMappings      PlaceCategoryMapping[]
+  operatingHours        PlaceOperatingHour[]
+  itineraryItems        ItineraryItem[]
+
+  @@index([locationId])
+  @@map("places")
+}
+
+model PlaceImage {
+  placeImageId          String     @id @default(dbgenerated("gen_random_uuid()")) @map("place_image_id") @db.Uuid
+  placeId               String     @map("place_id") @db.Uuid
+  imageUrl              String     @map("image_url")
+  displayOrder          Int        @default(1) @map("display_order")
+  createdAt             DateTime   @default(now()) @map("created_at")
+
+  place                 Place      @relation(fields: [placeId], references: [placeId])
+
+  @@unique([placeId, displayOrder])
+  @@map("place_images")
+}
+
+model PlaceCategory {
+  categoryId            String                 @id @default(dbgenerated("gen_random_uuid()")) @map("category_id") @db.Uuid
+  categoryName          PlaceCategoryEnum      @unique @map("category_name")
+  isActive              Boolean                @default(true) @map("is_active")
+
+  placeMappings         PlaceCategoryMapping[]
+
+  @@map("place_categories")
+}
+
+model PlaceCategoryMapping {
+  placeId               String         @map("place_id") @db.Uuid
+  categoryId            String         @map("category_id") @db.Uuid
+
+  place                 Place          @relation(fields: [placeId], references: [placeId])
+  category              PlaceCategory  @relation(fields: [categoryId], references: [categoryId])
+
+  @@id([placeId, categoryId])
+  @@index([categoryId, placeId])
+  @@map("place_category_mappings")
+}
+
+model PlaceOperatingHour {
+  operatingHourId       String      @id @default(dbgenerated("gen_random_uuid()")) @map("operating_hour_id") @db.Uuid
+  placeId               String      @map("place_id") @db.Uuid
+  dayOfWeek             DayOfWeek   @map("day_of_week")
+  openTime              DateTime?   @map("open_time") @db.Time(0)
+  closeTime             DateTime?   @map("close_time") @db.Time(0)
+  isClosed              Boolean     @default(false) @map("is_closed")
+
+  place                 Place       @relation(fields: [placeId], references: [placeId])
+
+  @@unique([placeId, dayOfWeek])
+  @@map("place_operating_hours")
+}
+
+model Itinerary {
+  itineraryId           String                      @id @default(dbgenerated("gen_random_uuid()")) @map("itinerary_id") @db.Uuid
+  userId                String                      @map("user_id") @db.Uuid
+  locationId            String                      @map("location_id") @db.Uuid
+  title                 String?                     @db.VarChar(180)
+  description           String?
+  bannerImageUrl        String?                     @map("banner_image_url")
+  startDate             DateTime                    @map("start_date") @db.Date
+  endDate               DateTime                    @map("end_date") @db.Date
+  travelerCount         Int                         @map("traveler_count")
+  interestSummary       String?                     @map("interest_summary")
+  budgetPreference      Decimal?                    @map("budget_preference") @db.Decimal(12, 2)
+  visibilityStatus      VisibilityStatus            @default(PRIVATE) @map("visibility_status")
+  estimatedTotalBudget  Decimal?                    @map("estimated_total_budget") @db.Decimal(12, 2)
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  updatedAt             DateTime                    @default(now()) @map("updated_at")
+
+  user                  User                        @relation(fields: [userId], references: [userId])
+  location              Location                    @relation(fields: [locationId], references: [locationId])
+  items                 ItineraryItem[]
+  reviews               PublishedItineraryReview[]
+  savedReferences       SavedReference[]
+  sourceLineages        DuplicatedItineraryLineage[] @relation("SourceItinerary")
+  newLineage            DuplicatedItineraryLineage?  @relation("NewItinerary")
+
+  @@index([userId])
+  @@index([visibilityStatus])
+  @@map("itineraries")
+}
+
+model ItineraryItem {
+  itineraryItemId       String      @id @default(dbgenerated("gen_random_uuid()")) @map("itinerary_item_id") @db.Uuid
+  itineraryId           String      @map("itinerary_id") @db.Uuid
+  placeId               String      @map("place_id") @db.Uuid
+  visitDate             DateTime    @map("visit_date") @db.Date
+  visitTime             DateTime    @map("visit_time") @db.Time(0)
+  notes                 String?
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @default(now()) @map("updated_at")
+
+  itinerary             Itinerary   @relation(fields: [itineraryId], references: [itineraryId])
+  place                 Place       @relation(fields: [placeId], references: [placeId])
+
+  @@unique([itineraryId, visitDate, visitTime])
+  @@map("itinerary_items")
+}
+
+model PublishedItineraryReview {
+  reviewId              String      @id @default(dbgenerated("gen_random_uuid()")) @map("review_id") @db.Uuid
+  itineraryId           String      @map("itinerary_id") @db.Uuid
+  reviewerUserId        String      @map("reviewer_user_id") @db.Uuid
+  rating                Decimal?    @db.Decimal(2, 1)
+  comment               String?
+  isHidden              Boolean     @default(false) @map("is_hidden")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @default(now()) @map("updated_at")
+
+  itinerary             Itinerary   @relation(fields: [itineraryId], references: [itineraryId])
+  reviewerUser          User        @relation(fields: [reviewerUserId], references: [userId])
+
+  @@unique([itineraryId, reviewerUserId])
+  @@map("published_itinerary_reviews")
+}
+
+model SavedReference {
+  savedReferenceId      String      @id @default(dbgenerated("gen_random_uuid()")) @map("saved_reference_id") @db.Uuid
+  userId                String      @map("user_id") @db.Uuid
+  itineraryId           String      @map("itinerary_id") @db.Uuid
+  savedAt               DateTime    @default(now()) @map("saved_at")
+
+  user                  User        @relation(fields: [userId], references: [userId])
+  itinerary             Itinerary   @relation(fields: [itineraryId], references: [itineraryId])
+
+  @@unique([userId, itineraryId])
+  @@map("saved_references")
+}
+
+model DuplicatedItineraryLineage {
+  duplicationId         String      @id @default(dbgenerated("gen_random_uuid()")) @map("duplication_id") @db.Uuid
+  sourceItineraryId     String      @map("source_itinerary_id") @db.Uuid
+  newItineraryId        String      @unique @map("new_itinerary_id") @db.Uuid
+  duplicatedByUserId    String      @map("duplicated_by_user_id") @db.Uuid
+  duplicatedAt          DateTime    @default(now()) @map("duplicated_at")
+
+  sourceItinerary       Itinerary   @relation("SourceItinerary", fields: [sourceItineraryId], references: [itineraryId])
+  newItinerary          Itinerary   @relation("NewItinerary", fields: [newItineraryId], references: [itineraryId])
+  duplicatedByUser      User        @relation(fields: [duplicatedByUserId], references: [userId])
+
+  @@map("duplicated_itinerary_lineages")
+}
