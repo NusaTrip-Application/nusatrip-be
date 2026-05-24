@@ -67,6 +67,16 @@ export const getAccountByIdParamsSchema = z.object({
 	userId: z.string().uuid(uuidMessage),
 });
 
+export const adminGetUsersQuerySchema = z.object({
+	search: z.string().trim().optional(),
+	sortBy: z
+		.enum(["nameAsc", "nameDesc", "createdAtAsc", "createdAtDesc"])
+		.default("createdAtDesc"),
+	accountStatus: z.enum(AccountStatus).optional(),
+	page: z.coerce.number().int().min(1).default(1),
+	limit: z.coerce.number().int().min(1).max(100).default(12),
+});
+
 export const adminCreateUserSchema = z.object({
 	fullName: z
 		.string()

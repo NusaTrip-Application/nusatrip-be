@@ -16,6 +16,7 @@ router.get("/:userId", authenticateToken, AccountController.getPublicProfile);
 
 adminRouter.use(authenticateToken, authorizeRoles(UserRole.ADMIN));
 adminRouter.post("/users", AccountController.adminCreateUser);
+adminRouter.get("/users", AccountController.adminGetUsers);
 adminRouter.get("/users/:userId", AccountController.adminGetUser);
 adminRouter.patch("/users/:userId", AccountController.adminUpdateUser);
 adminRouter.patch("/users/:userId/status", AccountController.adminChangeUserStatus);

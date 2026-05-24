@@ -4,6 +4,7 @@ import { env } from "../src/config/env";
 import { errorHandler } from "./middlewares/errorHandler";
 import authRoute from "./routes/authRoute";
 import { accountRouter, adminAccountRouter } from "./routes/accountRoute";
+import { adminLocationRouter, publicLocationRouter } from "./routes/locationRoute";
 
 const app = express();
 
@@ -19,7 +20,9 @@ app.use(
 app.use(express.json());
 app.use("/api/auth", authRoute);
 app.use("/api/accounts", accountRouter);
+app.use("/api/locations", publicLocationRouter);
 app.use("/api/admin/accounts", adminAccountRouter);
+app.use("/api/admin/locations", adminLocationRouter);
 
 app.get("/health", (_req, res) => {
 	res.status(200).json({

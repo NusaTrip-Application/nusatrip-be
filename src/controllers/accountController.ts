@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import {
 	adminCreateUserSchema,
+	adminGetUsersQuerySchema,
 	changeUserStatusSchema,
 	getAccountByIdParamsSchema,
 	registerAccountSchema,
@@ -95,6 +96,21 @@ class AccountController {
 			const result = await AccountService.createUserByAdmin(validatedData);
 
 			return successResponse(res, result, "User account created successfully", 201);
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async adminGetUsers(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const validatedQuery = adminGetUsersQuerySchema.parse(req.query);
+			const result = await AccountService.getAdminUsers(validatedQuery);
+
+			return successResponse(res, result, "User accounts fetched successfully");
 		} catch (error) {
 			next(error);
 		}

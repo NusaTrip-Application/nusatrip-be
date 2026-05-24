@@ -5,6 +5,7 @@ import { AppError } from "../middlewares/errorHandler";
 import AccountRepository from "../repositories/accountRepository";
 import type {
 	AdminCreateUserPayload,
+	AdminGetUsersQuery,
 	ChangeUserStatusPayload,
 	RegisterAccountPayload,
 	UpdateAccountPayload,
@@ -48,6 +49,23 @@ class AccountService {
 		}
 
 		return account;
+	}
+
+	static async getAdminUsers(query: AdminGetUsersQuery) {
+		const { items, totalItems } = await AccountRepository.findAdminUsers(query);
+		const totalPages = Math.max(1, Math.ceil(totalItems / query.limit));
+
+		return {
+			items,
+			metadata: {
+				page: query.page,
+				limit: query.limit,
+				totalItems,
+				totalPages,
+				hasNextPage: query.page < totalPages,
+				hasPrevPage: query.page > 1,
+			},
+		};
 	}
 
 	static async createUserByAdmin(payload: AdminCreateUserPayload) {

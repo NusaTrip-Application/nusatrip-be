@@ -1,6 +1,7 @@
 import { AccountStatus, UserRole } from "../../generated/prisma/enums";
 import type { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../config/prisma";
+import type { AdminGetUsersQuery } from "../types/accountType";
 
 const ownAccountSelect = {
 	userId: true,
@@ -23,6 +24,18 @@ const publicAccountSelect = {
 	profilePhotoUrl: true,
 	role: true,
 	createdAt: true,
+} as const;
+
+const adminUserListSelect = {
+	userId: true,
+	fullName: true,
+	email: true,
+	phoneNumber: true,
+	instagramUsername: true,
+	profilePhotoUrl: true,
+	accountStatus: true,
+	createdAt: true,
+	updatedAt: true,
 } as const;
 
 class AccountRepository {
@@ -49,6 +62,37 @@ class AccountRepository {
 		});
 	}
 
+	static async findAdminUsers(query: AdminGetUsersQuery) {
+		const where: Prisma.UserWhereInput = {
+			role: UserRole.USER,
+			...(query.accountStatus ? { accountStatus: query.accountStatus } : {}),
+			...(query.search
+				? {
+						fullName: {
+							contains: query.search,
+							mode: "insensitive",
+						},
+				  }
+				: {}),
+		};
+
+		const orderBy = mapAdminUserSort(query.sortBy);
+		const skip = (query.page - 1) * query.limit;
+
+		const [items, totalItems] = await prisma.$transaction([
+			prisma.user.findMany({
+				where,
+				orderBy,
+				skip,
+				take: query.limit,
+				select: adminUserListSelect,
+			}),
+			prisma.user.count({ where }),
+		]);
+
+		return { items, totalItems };
+	}
+
 	static async createAccount(payload: Prisma.UserCreateInput) {
 		return prisma.user.create({
 			data: payload,
@@ -73,6 +117,20 @@ class AccountRepository {
 			data: { accountStatus },
 			select: ownAccountSelect,
 		});
+	}
+}
+
+function mapAdminUserSort(sortBy: AdminGetUsersQuery["sortBy"]): Prisma.UserOrderByWithRelationInput {
+	switch (sortBy) {
+		case "nameAsc":
+			return { fullName: "asc" };
+		case "nameDesc":
+			return { fullName: "desc" };
+		case "createdAtAsc":
+			return { createdAt: "asc" };
+		case "createdAtDesc":
+		default:
+			return { createdAt: "desc" };
 	}
 }
 

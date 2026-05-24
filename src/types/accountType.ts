@@ -1,5 +1,6 @@
 import { AccountStatus, UserRole } from "../../generated/prisma/enums";
 import {
+	adminGetUsersQuerySchema,
 	adminCreateUserSchema,
 	changeUserStatusSchema,
 	getAccountByIdParamsSchema,
@@ -11,6 +12,7 @@ import { z } from "zod";
 export type RegisterAccountPayload = z.infer<typeof registerAccountSchema>;
 export type UpdateAccountPayload = z.infer<typeof updateAccountSchema>;
 export type GetAccountByIdParams = z.infer<typeof getAccountByIdParamsSchema>;
+export type AdminGetUsersQuery = z.infer<typeof adminGetUsersQuerySchema>;
 export type AdminCreateUserPayload = z.infer<typeof adminCreateUserSchema>;
 export type ChangeUserStatusPayload = z.infer<typeof changeUserStatusSchema>;
 
