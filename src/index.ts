@@ -1,5 +1,9 @@
 import express from "express";
 import cors from "cors";
+import { env } from "../src/config/env";
+import { errorHandler } from "./middlewares/errorHandler";
+import authRoute from "./routes/authRoute";
+import { accountRouter, adminAccountRouter } from "./routes/accountRoute";
 
 const app = express();
 
@@ -13,6 +17,9 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api/auth", authRoute);
+app.use("/api/accounts", accountRouter);
+app.use("/api/admin/accounts", adminAccountRouter);
 
 app.get("/health", (_req, res) => {
 	res.status(200).json({
@@ -20,11 +27,13 @@ app.get("/health", (_req, res) => {
 		message: "Server is healthy",
 		timestamp: new Date().toISOString(),
 		uptime: process.uptime(),
-		environment: process.env.NODE_ENV,
+		environment: env.NODE_ENV,
 	});
 });
 
-const PORT = process.env.PORT || 3000;
+app.use(errorHandler);
+
+const PORT = env.PORT || 3000;
 
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}`);
