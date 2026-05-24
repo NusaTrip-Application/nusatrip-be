@@ -35,8 +35,10 @@ app.use(errorHandler);
 
 const PORT = env.PORT || 3000;
 
-app.listen(PORT, () => {
-	console.log(`Server is running on port ${PORT}`);
-});
+if (!env.isTest) {
+	app.listen(PORT, () => {
+		console.log(`Server is running on port ${PORT}`);
+	});
+}
 
 export default app;

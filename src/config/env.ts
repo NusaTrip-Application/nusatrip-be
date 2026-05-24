@@ -5,7 +5,7 @@ dotenv.config();
 
 // Validation
 const envSchema = z.object({
-	NODE_ENV: z.enum(["development", "production"]).default("development"),
+	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 	PORT: z.coerce.number().int().positive().default(8000),
 	ACCESS_TOKEN_SECRET: z.string().min(1),
 	JWT_EXPIRE: z.string().min(1).default("1d"),
@@ -27,4 +27,5 @@ export const env = {
 	...parsedEnv.data,
 	isDevelopment: parsedEnv.data.NODE_ENV === "development",
 	isProduction: parsedEnv.data.NODE_ENV === "production",
+	isTest: parsedEnv.data.NODE_ENV === "test",
 };
