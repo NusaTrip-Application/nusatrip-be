@@ -10,7 +10,7 @@
 		"outDir": "./dist",
 		"module": "commonjs",
 		"target": "esnext",
-		"types": [],
+		"types": ["node", "jest"],
 		"lib": ["esnext"],
 		"sourceMap": true,
 		"declaration": true,
@@ -25,6 +25,7 @@
 		"isolatedModules": true,
 		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",
+		"ignoreDeprecations": "6.0",
 		"skipLibCheck": true
 	}
 }
