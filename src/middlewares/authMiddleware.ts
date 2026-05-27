@@ -14,13 +14,13 @@ export function authenticateToken(
 		const token = req.headers.authorization?.replace("Bearer ", "");
 
 		if (!token) {
-			throw new AppError("Token tidak ditemukan", 401);
+			throw new AppError("Token not found", 401);
 		}
 
 		const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as UserData;
 
 		if (!decoded || typeof decoded === "string" || !decoded.id) {
-			throw new AppError("Token tidak valid", 401);
+			throw new AppError("Token invalid", 401);
 		}
 
 		const userData: UserData = {
@@ -34,7 +34,7 @@ export function authenticateToken(
 		(req as ValidationRequest).user = userData;
 		return next();
 	} catch (err) {
-		return next(err instanceof AppError ? err : new AppError("Token tidak valid", 401));
+		return next(err instanceof AppError ? err : new AppError("Token invalid", 401));
 	}
 }
 

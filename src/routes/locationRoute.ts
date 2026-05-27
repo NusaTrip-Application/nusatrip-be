@@ -9,6 +9,7 @@ import { UserRole } from "../../generated/prisma/enums";
 const publicRouter = Router();
 const adminRouter = Router();
 
+publicRouter.get("/provinces", LocationController.getProvinces);
 publicRouter.get("/", LocationController.publicGetLocations);
 publicRouter.get("/:locationId", LocationController.publicGetLocationById);
 

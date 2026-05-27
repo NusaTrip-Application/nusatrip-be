@@ -5,6 +5,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import authRoute from "./routes/authRoute";
 import { accountRouter, adminAccountRouter } from "./routes/accountRoute";
 import { adminLocationRouter, publicLocationRouter } from "./routes/locationRoute";
+import { adminPlaceRouter, publicPlaceRouter } from "./routes/placeRoute";
 
 const app = express();
 
@@ -21,8 +22,10 @@ app.use(express.json());
 app.use("/api/auth", authRoute);
 app.use("/api/accounts", accountRouter);
 app.use("/api/locations", publicLocationRouter);
+app.use("/api/places", publicPlaceRouter);
 app.use("/api/admin/accounts", adminAccountRouter);
 app.use("/api/admin/locations", adminLocationRouter);
+app.use("/api/admin/places", adminPlaceRouter);
 
 app.get("/health", (_req, res) => {
 	res.status(200).json({

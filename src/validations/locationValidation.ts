@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const uuidMessage = "Invalid location id";
+const provinceUuidMessage = "Invalid province id";
 
 export const getLocationByIdParamsSchema = z.object({
 	locationId: z.string().uuid(uuidMessage),
@@ -8,7 +9,7 @@ export const getLocationByIdParamsSchema = z.object({
 
 export const adminGetLocationsQuerySchema = z.object({
 	search: z.string().trim().optional(),
-	provinceName: z.string().trim().optional(),
+	provinceId: z.string().uuid(provinceUuidMessage).optional(),
 	status: z.enum(["active", "inactive"]).optional(),
 	sortBy: z
 		.enum(["nameAsc", "nameDesc", "createdAtAsc", "createdAtDesc"])
@@ -19,7 +20,7 @@ export const adminGetLocationsQuerySchema = z.object({
 
 export const publicGetLocationsQuerySchema = z.object({
 	search: z.string().trim().optional(),
-	provinceName: z.string().trim().optional(),
+	provinceId: z.string().uuid(provinceUuidMessage).optional(),
 	sortBy: z
 		.enum(["nameAsc", "nameDesc", "createdAtAsc", "createdAtDesc"])
 		.default("nameAsc"),
@@ -28,16 +29,12 @@ export const publicGetLocationsQuerySchema = z.object({
 });
 
 export const createLocationSchema = z.object({
+	provinceId: z.string().uuid(provinceUuidMessage),
 	locationName: z
 		.string()
 		.trim()
 		.min(3, "Location name must be at least 3 characters")
 		.max(120, "Location name must not exceed 120 characters"),
-	provinceName: z
-		.string()
-		.trim()
-		.min(3, "Province name must be at least 3 characters")
-		.max(120, "Province name must not exceed 120 characters"),
 	description: z
 		.string()
 		.trim()
@@ -53,17 +50,12 @@ export const createLocationSchema = z.object({
 
 export const updateLocationSchema = z
 	.object({
+		provinceId: z.string().uuid(provinceUuidMessage).optional(),
 		locationName: z
 			.string()
 			.trim()
 			.min(3, "Location name must be at least 3 characters")
 			.max(120, "Location name must not exceed 120 characters")
-			.optional(),
-		provinceName: z
-			.string()
-			.trim()
-			.min(3, "Province name must be at least 3 characters")
-			.max(120, "Province name must not exceed 120 characters")
 			.optional(),
 		description: z
 			.string()

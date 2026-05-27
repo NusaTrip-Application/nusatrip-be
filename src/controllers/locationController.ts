@@ -11,6 +11,20 @@ import { successResponse } from "../utils/response";
 import LocationService from "../services/locationService";
 
 class LocationController {
+	static async getProvinces(
+		_req: Request,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const result = await LocationService.getActiveProvinces();
+
+			return successResponse(res, result, "Provinces fetched successfully");
+		} catch (error) {
+			next(error);
+		}
+	}
+
 	static async publicGetLocations(
 		req: Request,
 		res: Response,
