@@ -66,18 +66,33 @@ model User {
 
 model Location {
   locationId            String      @id @default(dbgenerated("gen_random_uuid()")) @map("location_id") @db.Uuid
+  provinceId            String      @map("province_id") @db.Uuid
   locationName          String      @unique @map("location_name") @db.VarChar(120)
-  provinceName          String      @map("province_name") @db.VarChar(120)
   description           String?
   imageUrl              String?     @map("image_url")
   isActive              Boolean     @default(true) @map("is_active")
   createdAt             DateTime    @default(now()) @map("created_at")
   updatedAt             DateTime    @default(now()) @map("updated_at")
 
+  province              Province    @relation(fields: [provinceId], references: [provinceId])
   places                Place[]
   itineraries           Itinerary[]
 
+  @@index([provinceId])
   @@map("locations")
+}
+
+model Province {
+  provinceId            String      @id @default(dbgenerated("gen_random_uuid()")) @map("province_id") @db.Uuid
+  provinceName          String      @unique @map("province_name") @db.VarChar(120)
+  order                 Int         @default(0) @map("order")
+  isActive              Boolean     @default(true) @map("is_active")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @default(now()) @map("updated_at")
+
+  locations             Location[]
+
+  @@map("provinces")
 }
 
 model Place {
@@ -86,8 +101,9 @@ model Place {
   placeName             String               @map("place_name") @db.VarChar(180)
   shortDescription      String?              @map("short_description")
   address               String
-  priceRangeText        String?              @map("price_range_text") @db.VarChar(100)
-  priceLabel            String?              @map("price_label") @db.VarChar(50)
+  priceMin              Decimal?             @map("price_min") @db.Decimal(12, 2)
+  priceMax              Decimal?             @map("price_max") @db.Decimal(12, 2)
+  priceDescription      String?              @map("price_description") @db.VarChar(100)
   websiteUrl            String?              @map("website_url")
   contactPhoneNumber    String?              @map("contact_phone_number") @db.VarChar(50)
   ratingValue           Decimal?             @map("rating_value") @db.Decimal(3, 2)
