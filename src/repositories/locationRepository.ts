@@ -8,12 +8,19 @@ import type {
 const adminLocationSelect = {
 	locationId: true,
 	locationName: true,
-	provinceName: true,
+	provinceId: true,
 	description: true,
 	imageUrl: true,
 	isActive: true,
 	createdAt: true,
 	updatedAt: true,
+	province: {
+		select: {
+			provinceId: true,
+			provinceName: true,
+			isActive: true,
+		},
+	},
 } as const;
 
 class LocationRepository {
@@ -32,6 +39,35 @@ class LocationRepository {
 		return prisma.location.findUnique({
 			where: { locationId },
 			select: adminLocationSelect,
+		});
+	}
+
+	static async findProvinceById(provinceId: string) {
+		return prisma.province.findUnique({
+			where: { provinceId },
+		});
+	}
+
+	static async findActiveProvinces() {
+		return prisma.province.findMany({
+			where: {
+				isActive: true,
+			},
+			orderBy: [{ order: "asc" }, { provinceName: "asc" }],
+			select: {
+				provinceId: true,
+				provinceName: true,
+				order: true,
+			},
+		});
+	}
+
+	static async findActiveProvinceById(provinceId: string) {
+		return prisma.province.findFirst({
+			where: {
+				provinceId,
+				isActive: true,
+			},
 		});
 	}
 
@@ -138,7 +174,7 @@ class LocationRepository {
 }
 
 function buildLocationWhereInput(
-	query: Pick<AdminGetLocationsQuery, "search" | "provinceName"> & {
+	query: Pick<AdminGetLocationsQuery, "search" | "provinceId"> & {
 		status?: AdminGetLocationsQuery["status"];
 	},
 ): Prisma.LocationWhereInput {
@@ -151,12 +187,9 @@ function buildLocationWhereInput(
 					},
 			  }
 			: {}),
-		...(query.provinceName
+		...(query.provinceId
 			? {
-					provinceName: {
-						equals: query.provinceName,
-						mode: "insensitive",
-					},
+					provinceId: query.provinceId,
 			  }
 			: {}),
 		...(query.status ? { isActive: query.status === "active" } : {}),

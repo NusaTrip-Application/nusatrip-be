@@ -10,6 +10,10 @@ import type {
 import { AppError } from "../middlewares/errorHandler";
 
 class LocationService {
+	static async getActiveProvinces() {
+		return LocationRepository.findActiveProvinces();
+	}
+
 	static async getPublicLocations(query: PublicGetLocationsQuery) {
 		const { items, totalItems } = await LocationRepository.findPublicLocations(query);
 		const totalPages = Math.max(1, Math.ceil(totalItems / query.limit));
@@ -69,6 +73,7 @@ class LocationService {
 	}
 
 	static async createLocation(payload: CreateLocationPayload) {
+		await ensureActiveProvinceExists(payload.provinceId);
 		const existingLocation = await LocationRepository.findByName(payload.locationName);
 
 		if (existingLocation) {
@@ -76,8 +81,12 @@ class LocationService {
 		}
 
 		const createPayload: Prisma.LocationCreateInput = {
+			province: {
+				connect: {
+					provinceId: payload.provinceId,
+				},
+			},
 			locationName: payload.locationName,
-			provinceName: payload.provinceName,
 			...(payload.description ? { description: payload.description } : {}),
 			...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
 		};
@@ -88,6 +97,9 @@ class LocationService {
 	static async updateLocation(locationId: string, payload: UpdateLocationPayload) {
 		const location = await this.getLocationById(locationId);
 		const normalizedPayload = normalizeOptionalStringFields(payload);
+		if (normalizedPayload.provinceId) {
+			await ensureActiveProvinceExists(normalizedPayload.provinceId);
+		}
 		const updatePayload = toLocationUpdateInput(normalizedPayload);
 		const nextLocationName =
 			typeof normalizedPayload.locationName === "string"
@@ -153,9 +165,28 @@ function normalizeOptionalStringFields<T extends Record<string, unknown>>(
 function toLocationUpdateInput(
 	payload: UpdateLocationPayload,
 ): Prisma.LocationUpdateInput {
-	return Object.fromEntries(
-		Object.entries(payload).filter(([, value]) => value !== undefined),
+	const entries = Object.entries(payload).filter(([, value]) => value !== undefined);
+	const updatePayload = Object.fromEntries(
+		entries.filter(([key]) => key !== "provinceId"),
 	) as Prisma.LocationUpdateInput;
+
+	if (typeof payload.provinceId === "string") {
+		updatePayload.province = {
+			connect: {
+				provinceId: payload.provinceId,
+			},
+		};
+	}
+
+	return updatePayload;
+}
+
+async function ensureActiveProvinceExists(provinceId: string) {
+	const province = await LocationRepository.findActiveProvinceById(provinceId);
+
+	if (!province) {
+		throw new AppError("Active province not found", 404);
+	}
 }
 
 export default LocationService;
