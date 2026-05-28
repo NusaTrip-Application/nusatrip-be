@@ -62,6 +62,19 @@ class LocationRepository {
 		});
 	}
 
+	static async findActiveLocationOptions() {
+		return prisma.location.findMany({
+			where: {
+				isActive: true,
+			},
+			orderBy: [{ locationName: "asc" }],
+			select: {
+				locationId: true,
+				locationName: true,
+			},
+		});
+	}
+
 	static async findActiveProvinceById(provinceId: string) {
 		return prisma.province.findFirst({
 			where: {

@@ -315,26 +315,56 @@ function mapPlaceListItem(
 		ReturnType<typeof PlaceRepository.findAdminPlaces>
 	>["items"][number],
 ) {
+	const categories = item.categoryMappings.map((mapping) => ({
+		categoryId: mapping.category.categoryId,
+		categoryName: mapping.category.categoryName,
+	}));
+
 	return {
-		...item,
-		ratingValue: item.ratingValue ? Number(item.ratingValue) : null,
+		placeId: item.placeId,
+		placeName: item.placeName,
+		shortDescription: item.shortDescription,
+		address: item.address,
 		priceMin: item.priceMin ? Number(item.priceMin) : null,
 		priceMax: item.priceMax ? Number(item.priceMax) : null,
-		categories: item.categoryMappings.map(
-			(mapping) => mapping.category.categoryName,
-		),
+		priceDescription: item.priceDescription,
+		websiteUrl: item.websiteUrl,
+		contactPhoneNumber: item.contactPhoneNumber,
+		ratingValue: item.ratingValue ? Number(item.ratingValue) : null,
+		ratingCount: item.ratingCount ?? null,
+		isActive: item.isActive,
+		createdAt: item.createdAt,
+		updatedAt: item.updatedAt,
+		location: item.location,
+		categories,
+		images: item.images,
 	};
 }
 
 function mapPlaceDetail(place: PlaceDetail) {
+	const categories = place.categoryMappings.map((mapping) => ({
+		categoryId: mapping.category.categoryId,
+		categoryName: mapping.category.categoryName,
+	}));
+
 	return {
-		...place,
-		ratingValue: place.ratingValue ? Number(place.ratingValue) : null,
+		placeId: place.placeId,
+		locationId: place.locationId,
+		placeName: place.placeName,
+		shortDescription: place.shortDescription,
+		address: place.address,
 		priceMin: place.priceMin ? Number(place.priceMin) : null,
 		priceMax: place.priceMax ? Number(place.priceMax) : null,
-		categories: place.categoryMappings.map(
-			(mapping) => mapping.category.categoryName,
-		),
+		priceDescription: place.priceDescription,
+		websiteUrl: place.websiteUrl,
+		contactPhoneNumber: place.contactPhoneNumber,
+		ratingValue: place.ratingValue ? Number(place.ratingValue) : null,
+		ratingCount: place.ratingCount ?? null,
+		isActive: place.isActive,
+		createdAt: place.createdAt,
+		updatedAt: place.updatedAt,
+		location: place.location,
+		categories,
 		operatingHours: place.operatingHours.map((item) => ({
 			...item,
 			openTime: item.openTime ? toTimeString(item.openTime) : null,
@@ -351,15 +381,18 @@ function buildRecommendationItem(
 	place: RecommendationPlace,
 	query: GetPlaceRecommendationsQuery,
 ) {
-	const categories = place.categoryMappings.map(
-		(mapping) => mapping.category.categoryName,
-	);
+	const categories = place.categoryMappings.map((mapping) => ({
+		categoryId: mapping.category.categoryId,
+		categoryName: mapping.category.categoryName,
+	}));
 	const categoryScore = getCategoryScore(categories, query.categories);
 	const ratingValue = place.ratingValue ? Number(place.ratingValue) : 0;
 	const priceMin = place.priceMin ? Number(place.priceMin) : null;
 	const priceMax = place.priceMax ? Number(place.priceMax) : null;
+	const ratingCount = place.ratingCount ?? 0;
+	const responseRatingCount = place.ratingCount ?? null;
 	const ratingScore = Math.min(25, (ratingValue / 5) * 25);
-	const popularityScore = Math.min(15, (place.ratingCount / 100) * 15);
+	const popularityScore = Math.min(15, (ratingCount / 100) * 15);
 	const priceScore = getPriceScore(priceMin, priceMax, query.budgetPreference);
 	const finalScore = roundScore(
 		categoryScore + ratingScore + popularityScore + priceScore,
@@ -374,7 +407,7 @@ function buildRecommendationItem(
 		priceMax,
 		priceDescription: place.priceDescription,
 		ratingValue,
-		ratingCount: place.ratingCount,
+		ratingCount: responseRatingCount,
 		location: place.location,
 		categories,
 		image: place.images[0] ?? null,
@@ -389,7 +422,7 @@ function buildRecommendationItem(
 }
 
 function getCategoryScore(
-	placeCategories: PlaceCategoryEnum[],
+	placeCategories: Array<{ categoryId: string; categoryName: PlaceCategoryEnum }>,
 	requestedCategories?: PlaceCategoryEnum[],
 ) {
 	if (!requestedCategories || requestedCategories.length === 0) {
@@ -397,7 +430,7 @@ function getCategoryScore(
 	}
 
 	const matchedCount = requestedCategories.filter((category) =>
-		placeCategories.includes(category),
+		placeCategories.some((placeCategory) => placeCategory.categoryName === category),
 	).length;
 
 	return (matchedCount / requestedCategories.length) * 50;
