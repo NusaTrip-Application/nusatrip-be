@@ -25,6 +25,20 @@ class LocationController {
 		}
 	}
 
+	static async getLocationOptions(
+		_req: Request,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const result = await LocationService.getActiveLocationOptions();
+
+			return successResponse(res, result, "Locations fetched successfully");
+		} catch (error) {
+			next(error);
+		}
+	}
+
 	static async publicGetLocations(
 		req: Request,
 		res: Response,

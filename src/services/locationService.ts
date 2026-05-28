@@ -14,6 +14,10 @@ class LocationService {
 		return LocationRepository.findActiveProvinces();
 	}
 
+	static async getActiveLocationOptions() {
+		return LocationRepository.findActiveLocationOptions();
+	}
+
 	static async getPublicLocations(query: PublicGetLocationsQuery) {
 		const { items, totalItems } = await LocationRepository.findPublicLocations(query);
 		const totalPages = Math.max(1, Math.ceil(totalItems / query.limit));

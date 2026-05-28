@@ -37,6 +37,7 @@ const adminPlaceListSelect = {
 		select: {
 			category: {
 				select: {
+					categoryId: true,
 					categoryName: true,
 				},
 			},
@@ -144,6 +145,7 @@ const recommendationSelect = {
 		select: {
 			category: {
 				select: {
+					categoryId: true,
 					categoryName: true,
 				},
 			},

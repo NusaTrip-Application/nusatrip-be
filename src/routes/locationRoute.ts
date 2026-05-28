@@ -10,11 +10,12 @@ const publicRouter = Router();
 const adminRouter = Router();
 
 publicRouter.get("/provinces", LocationController.getProvinces);
+publicRouter.get("/options", LocationController.getLocationOptions);
 publicRouter.get("/", LocationController.publicGetLocations);
 publicRouter.get("/:locationId", LocationController.publicGetLocationById);
 
 adminRouter.use(authenticateToken, authorizeRoles(UserRole.ADMIN));
-adminRouter.get("summary", LocationController.getLocationSummary);
+adminRouter.get("/summary", LocationController.getLocationSummary);
 adminRouter.get("/", LocationController.adminGetLocations);
 adminRouter.get("/:locationId", LocationController.getLocationById);
 adminRouter.post("/", LocationController.createLocation);
