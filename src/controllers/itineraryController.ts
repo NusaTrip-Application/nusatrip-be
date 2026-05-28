@@ -2,10 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import { successResponse } from "../utils/response";
 import {
 	adminGetItinerariesQuerySchema,
+	createItineraryItemSchema,
 	createItinerarySchema,
 	getItineraryByIdParamsSchema,
+	getItineraryItemParamsSchema,
 	getMyItinerariesQuerySchema,
 	updateBudgetSchema,
+	updateItineraryItemSchema,
 	updateItinerarySchema,
 } from "../validations/itineraryValidation";
 import ItineraryService from "../services/itineraryService";
@@ -69,6 +72,76 @@ class ItineraryController {
 			const result = await ItineraryService.deleteItinerary(user, itineraryId);
 
 			return successResponse(res, result, "Itinerary deleted successfully");
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async createItineraryItem(
+		req: ValidationRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const user = ItineraryController.requireAuthenticatedUser(req);
+			const { itineraryId } = getItineraryByIdParamsSchema.parse(req.params);
+			const validatedData = createItineraryItemSchema.parse(req.body);
+			const result = await ItineraryService.createItineraryItem(
+				user,
+				itineraryId,
+				validatedData,
+			);
+
+			return successResponse(
+				res,
+				result,
+				"Itinerary item created successfully",
+				201,
+			);
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async updateItineraryItem(
+		req: ValidationRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const user = ItineraryController.requireAuthenticatedUser(req);
+			const { itineraryId, itineraryItemId } =
+				getItineraryItemParamsSchema.parse(req.params);
+			const validatedData = updateItineraryItemSchema.parse(req.body);
+			const result = await ItineraryService.updateItineraryItem(
+				user,
+				itineraryId,
+				itineraryItemId,
+				validatedData,
+			);
+
+			return successResponse(res, result, "Itinerary item updated successfully");
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async deleteItineraryItem(
+		req: ValidationRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const user = ItineraryController.requireAuthenticatedUser(req);
+			const { itineraryId, itineraryItemId } =
+				getItineraryItemParamsSchema.parse(req.params);
+			const result = await ItineraryService.deleteItineraryItem(
+				user,
+				itineraryId,
+				itineraryItemId,
+			);
+
+			return successResponse(res, result, "Itinerary item deleted successfully");
 		} catch (error) {
 			next(error);
 		}

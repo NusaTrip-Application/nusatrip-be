@@ -3,14 +3,18 @@ import type { Prisma } from "../../generated/prisma/client";
 import { AppError } from "../middlewares/errorHandler";
 import ItineraryRepository, {
 	type ItineraryDetailItem,
+	type ItineraryItemDetail,
 	type ItineraryListItem,
 } from "../repositories/itineraryRepository";
 import LocationRepository from "../repositories/locationRepository";
+import PlaceRepository from "../repositories/placeRepository";
 import type {
 	AdminGetItinerariesQuery,
+	CreateItineraryItemPayload,
 	CreateItineraryPayload,
 	GetMyItinerariesQuery,
 	UpdateBudgetPayload,
+	UpdateItineraryItemPayload,
 	UpdateItineraryPayload,
 } from "../types/itineraryType";
 import type { UserData } from "../types/authType";
@@ -126,6 +130,109 @@ class ItineraryService {
 		return ItineraryRepository.deleteItineraryById(itineraryId);
 	}
 
+	static async createItineraryItem(
+		currentUser: UserData,
+		itineraryId: string,
+		payload: CreateItineraryItemPayload,
+	) {
+		const itinerary = await this.getOwnedItinerary(currentUser, itineraryId);
+		await ensurePlaceCanBeAddedToItinerary(payload.placeId, itinerary.locationId);
+
+		const visitTime = toTimeDate(payload.visitTime);
+		await ensureScheduleAvailable(itineraryId, payload.visitDate, visitTime);
+
+		const createPayload: Prisma.ItineraryItemCreateInput = {
+			itinerary: {
+				connect: {
+					itineraryId,
+				},
+			},
+			place: {
+				connect: {
+					placeId: payload.placeId,
+				},
+			},
+			visitDate: payload.visitDate,
+			visitTime,
+			...(payload.notes ? { notes: payload.notes } : {}),
+		};
+
+		const item = await ItineraryRepository.createItineraryItem(createPayload);
+		return mapItineraryItem(item);
+	}
+
+	static async updateItineraryItem(
+		currentUser: UserData,
+		itineraryId: string,
+		itineraryItemId: string,
+		payload: UpdateItineraryItemPayload,
+	) {
+		const itinerary = await this.getOwnedItinerary(currentUser, itineraryId);
+		const existingItem = await getItineraryItemInItinerary(
+			itineraryId,
+			itineraryItemId,
+		);
+
+		if (payload.placeId) {
+			await ensurePlaceCanBeAddedToItinerary(payload.placeId, itinerary.locationId);
+		}
+
+		const normalizedPayload = normalizeOptionalStringFields(payload);
+		const nextVisitDate = normalizedPayload.visitDate ?? existingItem.visitDate;
+		const nextVisitTime = normalizedPayload.visitTime
+			? toTimeDate(normalizedPayload.visitTime)
+			: existingItem.visitTime;
+
+		await ensureScheduleAvailable(
+			itineraryId,
+			nextVisitDate,
+			nextVisitTime,
+			itineraryItemId,
+		);
+
+		const updatePayload: Prisma.ItineraryItemUpdateInput = {};
+
+		if (normalizedPayload.placeId) {
+			updatePayload.place = {
+				connect: {
+					placeId: normalizedPayload.placeId,
+				},
+			};
+		}
+
+		if (normalizedPayload.visitDate !== undefined) {
+			updatePayload.visitDate = normalizedPayload.visitDate;
+		}
+
+		if (normalizedPayload.visitTime !== undefined) {
+			updatePayload.visitTime = toTimeDate(normalizedPayload.visitTime);
+		}
+
+		if (normalizedPayload.notes !== undefined) {
+			updatePayload.notes = normalizedPayload.notes;
+		}
+
+		const item = await ItineraryRepository.updateItineraryItemById(
+			itineraryItemId,
+			updatePayload,
+		);
+		return mapItineraryItem(item);
+	}
+
+	static async deleteItineraryItem(
+		currentUser: UserData,
+		itineraryId: string,
+		itineraryItemId: string,
+	) {
+		await this.getOwnedItinerary(currentUser, itineraryId);
+		await getItineraryItemInItinerary(itineraryId, itineraryItemId);
+
+		const item = await ItineraryRepository.deleteItineraryItemById(
+			itineraryItemId,
+		);
+		return mapItineraryItem(item);
+	}
+
 	static async updateEstimatedTotalBudget(
 		currentUser: UserData,
 		itineraryId: string,
@@ -217,6 +324,22 @@ class ItineraryService {
 
 		return itinerary;
 	}
+
+	private static async getOwnedItinerary(
+		currentUser: UserData,
+		itineraryId: string,
+	) {
+		const itinerary = await ItineraryRepository.findById(itineraryId);
+		if (!itinerary) {
+			throw new AppError("Itinerary not found", 404);
+		}
+
+		if (itinerary.userId !== currentUser.id) {
+			throw new AppError("Forbidden", 403);
+		}
+
+		return itinerary;
+	}
 }
 
 async function ensureLocationExists(locationId: string) {
@@ -239,6 +362,54 @@ async function ensureInterestCategoriesExist(categoryIds: string[]) {
 	}
 }
 
+async function ensurePlaceCanBeAddedToItinerary(
+	placeId: string,
+	locationId: string,
+) {
+	const place = await PlaceRepository.findActiveById(placeId);
+	if (!place) {
+		throw new AppError("Active place not found", 404);
+	}
+
+	if (place.locationId !== locationId) {
+		throw new AppError("Place must belong to the itinerary location", 400);
+	}
+}
+
+async function ensureScheduleAvailable(
+	itineraryId: string,
+	visitDate: Date,
+	visitTime: Date,
+	excludedItineraryItemId?: string,
+) {
+	const existingSchedule = await ItineraryRepository.findItineraryItemSchedule(
+		itineraryId,
+		visitDate,
+		visitTime,
+		excludedItineraryItemId,
+	);
+
+	if (existingSchedule) {
+		throw new AppError(
+			"Itinerary item already exists at the selected date and time",
+			409,
+		);
+	}
+}
+
+async function getItineraryItemInItinerary(
+	itineraryId: string,
+	itineraryItemId: string,
+) {
+	const item = await ItineraryRepository.findItineraryItemById(itineraryItemId);
+
+	if (!item || item.itineraryId !== itineraryId) {
+		throw new AppError("Itinerary item not found", 404);
+	}
+
+	return item;
+}
+
 function normalizeOptionalStringFields<T extends Record<string, unknown>>(
 	payload: T,
 ): T {
@@ -256,6 +427,10 @@ function getUniqueCategoryIds(categoryIds?: string[]) {
 	}
 
 	return [...new Set(categoryIds)];
+}
+
+function toTimeDate(time: string) {
+	return new Date(`1970-01-01T${time}:00.000Z`);
 }
 
 function paginateAndSortItineraries<
@@ -434,6 +609,34 @@ function mapItineraryDetail(
 		},
 		interestCategories,
 		itineraryItemsByDay,
+	};
+}
+
+function mapItineraryItem(item: ItineraryItemDetail) {
+	return {
+		itineraryItemId: item.itineraryItemId,
+		itineraryId: item.itineraryId,
+		placeId: item.placeId,
+		visitDate: item.visitDate,
+		visitTime: item.visitTime.toISOString().slice(11, 16),
+		notes: item.notes,
+		createdAt: item.createdAt,
+		updatedAt: item.updatedAt,
+		place: {
+			placeId: item.place.placeId,
+			placeName: item.place.placeName,
+			shortDescription: item.place.shortDescription,
+			address: item.place.address,
+			priceMin: item.place.priceMin ? Number(item.place.priceMin) : null,
+			priceMax: item.place.priceMax ? Number(item.place.priceMax) : null,
+			priceDescription: item.place.priceDescription,
+			ratingValue: item.place.ratingValue ? Number(item.place.ratingValue) : null,
+			image: item.place.images[0] ?? null,
+			categories: item.place.categoryMappings.map((mapping) => ({
+				categoryId: mapping.category.categoryId,
+				categoryName: mapping.category.categoryName,
+			})),
+		},
 	};
 }
 

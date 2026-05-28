@@ -147,6 +147,50 @@ const itineraryDetailSelect = {
 	},
 } as const;
 
+const itineraryItemSelect = {
+	itineraryItemId: true,
+	itineraryId: true,
+	placeId: true,
+	visitDate: true,
+	visitTime: true,
+	notes: true,
+	createdAt: true,
+	updatedAt: true,
+	place: {
+		select: {
+			placeId: true,
+			placeName: true,
+			shortDescription: true,
+			address: true,
+			priceMin: true,
+			priceMax: true,
+			priceDescription: true,
+			ratingValue: true,
+			images: {
+				orderBy: {
+					displayOrder: "asc",
+				},
+				take: 1,
+				select: {
+					placeImageId: true,
+					imageUrl: true,
+					displayOrder: true,
+				},
+			},
+			categoryMappings: {
+				select: {
+					category: {
+						select: {
+							categoryId: true,
+							categoryName: true,
+						},
+					},
+				},
+			},
+		},
+	},
+} as const;
+
 class ItineraryRepository {
 	static async createItinerary(
 		payload: Prisma.ItineraryCreateInput,
@@ -234,6 +278,63 @@ class ItineraryRepository {
 				where: { itineraryId },
 				select: itineraryDetailSelect,
 			});
+		});
+	}
+
+	static async createItineraryItem(payload: Prisma.ItineraryItemCreateInput) {
+		return prisma.itineraryItem.create({
+			data: payload,
+			select: itineraryItemSelect,
+		});
+	}
+
+	static async findItineraryItemById(itineraryItemId: string) {
+		return prisma.itineraryItem.findUnique({
+			where: { itineraryItemId },
+			select: itineraryItemSelect,
+		});
+	}
+
+	static async findItineraryItemSchedule(
+		itineraryId: string,
+		visitDate: Date,
+		visitTime: Date,
+		excludedItineraryItemId?: string,
+	) {
+		return prisma.itineraryItem.findFirst({
+			where: {
+				itineraryId,
+				visitDate,
+				visitTime,
+				...(excludedItineraryItemId
+					? {
+							NOT: {
+								itineraryItemId: excludedItineraryItemId,
+							},
+						}
+					: {}),
+			},
+			select: {
+				itineraryItemId: true,
+			},
+		});
+	}
+
+	static async updateItineraryItemById(
+		itineraryItemId: string,
+		payload: Prisma.ItineraryItemUpdateInput,
+	) {
+		return prisma.itineraryItem.update({
+			where: { itineraryItemId },
+			data: payload,
+			select: itineraryItemSelect,
+		});
+	}
+
+	static async deleteItineraryItemById(itineraryItemId: string) {
+		return prisma.itineraryItem.delete({
+			where: { itineraryItemId },
+			select: itineraryItemSelect,
 		});
 	}
 
@@ -339,6 +440,10 @@ export type ItineraryListItem = Prisma.ItineraryGetPayload<{
 
 export type ItineraryDetailItem = Prisma.ItineraryGetPayload<{
 	select: typeof itineraryDetailSelect;
+}>;
+
+export type ItineraryItemDetail = Prisma.ItineraryItemGetPayload<{
+	select: typeof itineraryItemSelect;
 }>;
 
 function buildItineraryWhereInput(query: {
