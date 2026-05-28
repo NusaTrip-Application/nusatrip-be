@@ -10,6 +10,18 @@ publicItineraryRouter.use(authenticateToken);
 
 publicItineraryRouter.post("/", ItineraryController.createItinerary);
 publicItineraryRouter.get("/", ItineraryController.getMyItineraries);
+publicItineraryRouter.post(
+	"/:itineraryId/items",
+	ItineraryController.createItineraryItem,
+);
+publicItineraryRouter.patch(
+	"/:itineraryId/items/:itineraryItemId",
+	ItineraryController.updateItineraryItem,
+);
+publicItineraryRouter.delete(
+	"/:itineraryId/items/:itineraryItemId",
+	ItineraryController.deleteItineraryItem,
+);
 publicItineraryRouter.get("/:itineraryId", ItineraryController.getItineraryDetail);
 publicItineraryRouter.patch("/:itineraryId", ItineraryController.updateItinerary);
 publicItineraryRouter.delete("/:itineraryId", ItineraryController.deleteItinerary);

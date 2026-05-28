@@ -4,12 +4,22 @@ import { z } from "zod";
 const uuidMessage = "Invalid itinerary id";
 const locationUuidMessage = "Invalid location id";
 const categoryUuidMessage = "Invalid category id";
+const placeUuidMessage = "Invalid place id";
+const itineraryItemUuidMessage = "Invalid itinerary item id";
 
 const visibilityStatusSchema = z.nativeEnum(VisibilityStatus);
 const interestCategoryIdsSchema = z.array(z.string().uuid(categoryUuidMessage));
+const visitTimeSchema = z
+	.string()
+	.regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "visit time must be in HH:mm format");
 
 export const getItineraryByIdParamsSchema = z.object({
 	itineraryId: z.string().uuid(uuidMessage),
+});
+
+export const getItineraryItemParamsSchema = z.object({
+	itineraryId: z.string().uuid(uuidMessage),
+	itineraryItemId: z.string().uuid(itineraryItemUuidMessage),
 });
 
 export const createItinerarySchema = z.object({
@@ -29,7 +39,7 @@ export const createItinerarySchema = z.object({
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
 			path: ["endDate"],
-			message: "endDate must be greater than or equal to startDate",
+			message: "End date must be greater than or equal to start date",
 		});
 	}
 });
@@ -62,7 +72,7 @@ export const updateItinerarySchema = z
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ["endDate"],
-				message: "endDate must be greater than or equal to startDate",
+				message: "End date must be greater than or equal to start date",
 			});
 		}
 	});
@@ -70,6 +80,29 @@ export const updateItinerarySchema = z
 export const updateBudgetSchema = z.object({
 	estimatedTotalBudget: z.coerce.number().min(0, "Estimated total budget must be greater than or equal to 0"),
 });
+
+export const createItineraryItemSchema = z.object({
+	placeId: z.string().uuid(placeUuidMessage),
+	visitDate: z.coerce.date(),
+	visitTime: visitTimeSchema,
+	notes: z.string().trim().max(1000, "Notes must not exceed 1000 characters").optional().or(z.literal("")),
+});
+
+export const updateItineraryItemSchema = z
+	.object({
+		placeId: z.string().uuid(placeUuidMessage).optional(),
+		visitDate: z.coerce.date().optional(),
+		visitTime: visitTimeSchema.optional(),
+		notes: z.string().trim().max(1000, "Notes must not exceed 1000 characters").optional().or(z.literal("")),
+	})
+	.superRefine((value, ctx) => {
+		if (Object.keys(value).length === 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "At least one field must be provided",
+			});
+		}
+	});
 
 export const adminGetItinerariesQuerySchema = z.object({
 	locationId: z.string().uuid(locationUuidMessage).optional(),
