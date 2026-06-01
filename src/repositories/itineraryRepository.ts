@@ -432,6 +432,65 @@ class ItineraryRepository {
 
 		return summary;
 	}
+
+	static async duplicateItinerary(
+		sourceItinerary: Prisma.ItineraryGetPayload<{
+			include: { items: true; interestCategories: true };
+		}>,
+		newUserId: string,
+	) {
+		return prisma.$transaction(async (tx) => {
+			const newItinerary = await tx.itinerary.create({
+				data: {
+					userId: newUserId,
+					locationId: sourceItinerary.locationId,
+					title: `Copy of ${sourceItinerary.title}`,
+					description: sourceItinerary.description,
+					bannerImageUrl: sourceItinerary.bannerImageUrl,
+					startDate: sourceItinerary.startDate,
+					endDate: sourceItinerary.endDate,
+					travelerCount: sourceItinerary.travelerCount,
+					budgetPreference: sourceItinerary.budgetPreference,
+					visibilityStatus: VisibilityStatus.PRIVATE,
+					estimatedTotalBudget: sourceItinerary.estimatedTotalBudget,
+				},
+			});
+
+			if (sourceItinerary.interestCategories.length > 0) {
+				await tx.itineraryInterestCategory.createMany({
+					data: sourceItinerary.interestCategories.map((ic) => ({
+						itineraryId: newItinerary.itineraryId,
+						categoryId: ic.categoryId,
+					})),
+				});
+			}
+
+			if (sourceItinerary.items.length > 0) {
+				await tx.itineraryItem.createMany({
+					data: sourceItinerary.items.map((item) => ({
+						itineraryId: newItinerary.itineraryId,
+						placeId: item.placeId,
+						visitDate: item.visitDate,
+						visitTime: item.visitTime,
+						notes: item.notes,
+					})),
+				});
+			}
+
+			await tx.duplicatedItineraryLineage.create({
+				data: {
+					sourceItineraryId: sourceItinerary.itineraryId,
+					newItineraryId: newItinerary.itineraryId,
+					duplicatedByUserId: newUserId,
+				},
+			});
+
+			return tx.itinerary.findUnique({
+				where: { itineraryId: newItinerary.itineraryId },
+				select: itineraryDetailSelect,
+			});
+		});
+	}
 }
 
 export type ItineraryListItem = Prisma.ItineraryGetPayload<{

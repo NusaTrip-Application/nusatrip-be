@@ -7,6 +7,8 @@ import { accountRouter, adminAccountRouter } from "./routes/accountRoute";
 import { adminLocationRouter, publicLocationRouter } from "./routes/locationRoute";
 import { adminPlaceRouter, publicPlaceRouter } from "./routes/placeRoute";
 import { adminItineraryRouter, publicItineraryRouter } from "./routes/itineraryRoute";
+import { adminReviewRouter, publicReviewRouter } from "./routes/reviewRoute";
+import mediaRouter from "./routes/mediaRoute";
 
 const app = express();
 
@@ -24,11 +26,14 @@ app.use("/api/auth", authRoute);
 app.use("/api/accounts", accountRouter);
 app.use("/api/locations", publicLocationRouter);
 app.use("/api/places", publicPlaceRouter);
+app.use("/api/reviews", publicReviewRouter);
+app.use("/api/media", mediaRouter);
 app.use("/api/admin/accounts", adminAccountRouter);
 app.use("/api/admin/locations", adminLocationRouter);
 app.use("/api/admin/places", adminPlaceRouter);
 app.use("/api/itineraries", publicItineraryRouter);
 app.use("/api/admin/itineraries", adminItineraryRouter);
+app.use("/api/admin/reviews", adminReviewRouter);
 
 app.get("/health", (_req, res) => {
 	res.status(200).json({
