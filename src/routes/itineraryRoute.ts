@@ -2,16 +2,27 @@ import { Router } from "express";
 import ItineraryController from "../controllers/itineraryController";
 import CommunityController from "../controllers/communityController";
 import ReviewController from "../controllers/reviewController";
-import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware";
+import {
+	authenticateToken,
+	authorizeRoles,
+} from "../middlewares/authMiddleware";
 import { UserRole } from "../../generated/prisma/enums";
 
 const publicItineraryRouter = Router();
 const adminItineraryRouter = Router();
 
-// Community / Public Discovery Routes (Must be before /:itineraryId)
-publicItineraryRouter.get("/community", CommunityController.getCommunityItineraries);
-publicItineraryRouter.get("/community/:itineraryId/summary", CommunityController.getCommunitySummary);
-publicItineraryRouter.get("/community/:itineraryId/author-others", CommunityController.getOtherAuthorItineraries);
+publicItineraryRouter.get(
+	"/community",
+	CommunityController.getCommunityItineraries,
+);
+publicItineraryRouter.get(
+	"/community/:itineraryId/summary",
+	CommunityController.getCommunitySummary,
+);
+publicItineraryRouter.get(
+	"/community/:itineraryId/author-others",
+	CommunityController.getOtherAuthorItineraries,
+);
 publicItineraryRouter.get(
 	"/community/:itineraryId/reviews",
 	ReviewController.getPublicReviewsByItinerary,
@@ -19,22 +30,24 @@ publicItineraryRouter.get(
 
 publicItineraryRouter.use(authenticateToken);
 
-// Saved Itineraries
 publicItineraryRouter.get("/saved", CommunityController.getSavedItineraries);
 
-// General Itinerary Routes
 publicItineraryRouter.get("/", ItineraryController.getMyItineraries);
 publicItineraryRouter.post("/", ItineraryController.createItinerary);
 
-// Specific Itinerary Actions
 publicItineraryRouter.get("/:itineraryId", ItineraryController.getItineraryDetail);
 publicItineraryRouter.patch("/:itineraryId", ItineraryController.updateItinerary);
 publicItineraryRouter.delete("/:itineraryId", ItineraryController.deleteItinerary);
-publicItineraryRouter.patch("/:itineraryId/budget", ItineraryController.updateEstimatedTotalBudget);
+publicItineraryRouter.patch(
+	"/:itineraryId/budget",
+	ItineraryController.updateEstimatedTotalBudget,
+);
 
-// Community Specific Itinerary Actions
 publicItineraryRouter.post("/:itineraryId/save", CommunityController.saveItinerary);
-publicItineraryRouter.post("/:itineraryId/duplicate", CommunityController.duplicateItinerary);
+publicItineraryRouter.post(
+	"/:itineraryId/duplicate",
+	CommunityController.duplicateItinerary,
+);
 publicItineraryRouter.post(
 	"/community/:itineraryId/reviews",
 	ReviewController.createReview,
@@ -48,7 +61,6 @@ publicItineraryRouter.delete(
 	ReviewController.deleteReview,
 );
 
-// Itinerary Items
 publicItineraryRouter.post(
 	"/:itineraryId/items",
 	ItineraryController.createItineraryItem,
