@@ -30,18 +30,10 @@ class CommunityRepository {
 			];
 		}
 
-		let orderBy: Prisma.ItineraryOrderByWithRelationInput | Prisma.ItineraryOrderByWithRelationInput[] = {};
-
-		if (query.filter === "popular") {
-			// Sort by most saved and most reviewed
-			orderBy = [
-				{ savedReferences: { _count: "desc" } },
-				{ reviews: { _count: "desc" } },
-			];
-		} else {
-			// recent
-			orderBy = { createdAt: "desc" };
-		}
+		const orderBy: Prisma.ItineraryOrderByWithRelationInput =
+			query.filter === "popular"
+				? ({ savedReferences: { _count: "desc" } } as Prisma.ItineraryOrderByWithRelationInput)
+				: { createdAt: "desc" };
 
 		const [items, totalItems] = await prisma.$transaction([
 			prisma.itinerary.findMany({

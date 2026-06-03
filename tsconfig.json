@@ -10,7 +10,7 @@
 		"outDir": "./dist",
 		"module": "commonjs",
 		"target": "esnext",
-		"types": ["node", "jest"],
+		"types": ["node", "jest", "swagger-jsdoc", "swagger-ui-express"],
 		"lib": ["esnext"],
 		"sourceMap": true,
 		"declaration": true,

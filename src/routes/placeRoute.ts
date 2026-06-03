@@ -14,6 +14,7 @@ publicRouter.get("/categories", PlaceController.getPlaceCategories);
 publicRouter.get("/:placeId", PlaceController.getPublicPlaceById);
 
 adminRouter.use(authenticateToken, authorizeRoles(UserRole.ADMIN));
+
 adminRouter.get("/summary", PlaceController.getPlaceSummary);
 adminRouter.get("/", PlaceController.getAdminPlaces);
 adminRouter.get("/:placeId", PlaceController.getAdminPlaceById);

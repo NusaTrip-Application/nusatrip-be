@@ -5,6 +5,7 @@ import { authenticateToken } from "../middlewares/authMiddleware";
 const mediaRouter = Router();
 
 mediaRouter.use(authenticateToken);
+
 mediaRouter.post("/presigned-url", MediaController.generatePresignedUrl);
 mediaRouter.delete("/", MediaController.deleteFile);
 
