@@ -15,6 +15,7 @@ import {
 	publicItineraryRouter,
 } from "./routes/itineraryRoute";
 import { adminReviewRouter, publicReviewRouter } from "./routes/reviewRoute";
+import { adminDashboardRouter } from "./routes/dashboardRoute";
 import mediaRouter from "./routes/mediaRoute";
 import { swaggerSpec } from "./config/swagger";
 
@@ -52,6 +53,7 @@ app.use("/api/admin/places", adminPlaceRouter);
 app.use("/api/itineraries", publicItineraryRouter);
 app.use("/api/admin/itineraries", adminItineraryRouter);
 app.use("/api/admin/reviews", adminReviewRouter);
+app.use("/api/admin/dashboard", adminDashboardRouter);
 
 /**
  * @openapi

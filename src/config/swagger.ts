@@ -287,6 +287,7 @@ export const swaggerSpec = swaggerJSDoc({
 			{ name: "Community" },
 			{ name: "Reviews" },
 			{ name: "Admin Reviews" },
+			{ name: "Admin Dashboard" },
 			{ name: "Media" },
 		],
 	},
