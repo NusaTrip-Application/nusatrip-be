@@ -300,14 +300,10 @@ export const getSwaggerSpec = (): object => {
 			],
 		},
 		apis: [
-			"./src/index.ts",
-			"./src/api-docum/**/*.ts",
-			"./src/routes/**/*.ts",
-			"./src/controllers/**/*.ts",
 			"./dist/src/index.js",
-			"./dist/src/api-docum/**/*.js",
-			"./dist/src/routes/**/*.js",
-			"./dist/src/controllers/**/*.js",
+			"./dist/src/api-docum/*.js",
+			"./dist/src/routes/*.js",
+			"./dist/src/controllers/*.js",
 		],
 	});
 
