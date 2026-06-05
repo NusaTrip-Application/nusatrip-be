@@ -4,6 +4,7 @@ import { env } from "../src/config/env";
 import swaggerUi from "swagger-ui-express";
 import { errorHandler } from "./middlewares/errorHandler";
 import authRoute from "./routes/authRoute";
+import cronRoute from "./routes/cronRoute";
 import { accountRouter, adminAccountRouter } from "./routes/accountRoute";
 import {
 	adminLocationRouter,
@@ -32,14 +33,12 @@ app.use(
 
 app.use(express.json());
 
-if (env.isDevelopment) {
-	app.get("/api/docs.json", (_req, res) => {
-		res.setHeader("Content-Type", "application/json");
-		res.status(200).send(swaggerSpec);
-	});
+app.get("/api/docs.json", (_req, res) => {
+	res.setHeader("Content-Type", "application/json");
+	res.status(200).send(swaggerSpec);
+});
 
-	app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-}
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/api/auth", authRoute);
 app.use("/api/accounts", accountRouter);
@@ -47,6 +46,7 @@ app.use("/api/locations", publicLocationRouter);
 app.use("/api/places", publicPlaceRouter);
 app.use("/api/reviews", publicReviewRouter);
 app.use("/api/media", mediaRouter);
+app.use("/", cronRoute);
 app.use("/api/admin/accounts", adminAccountRouter);
 app.use("/api/admin/locations", adminLocationRouter);
 app.use("/api/admin/places", adminPlaceRouter);
@@ -55,28 +55,6 @@ app.use("/api/admin/itineraries", adminItineraryRouter);
 app.use("/api/admin/reviews", adminReviewRouter);
 app.use("/api/admin/dashboard", adminDashboardRouter);
 
-/**
- * @openapi
- * /health:
- *   get:
- *     tags: [Health]
- *     summary: Health check
- *     security: []
- *     responses:
- *       200:
- *         description: Server is healthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               required: [success, message, timestamp, uptime, environment]
- *               properties:
- *                 success: { type: boolean, example: true }
- *                 message: { type: string, example: "Server is healthy" }
- *                 timestamp: { type: string, format: date-time }
- *                 uptime: { type: number, example: 123.45 }
- *                 environment: { type: string, example: "development" }
- */
 app.get("/health", (_req, res) => {
 	res.status(200).json({
 		success: true,

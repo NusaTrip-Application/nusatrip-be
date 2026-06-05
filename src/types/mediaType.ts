@@ -8,7 +8,7 @@ export type PresignedUrlRequest = {
 	mimetype: string;
 	size: number;
 	userId: string;
-	folder: "location" | "place" | "user";
+	folder: "location" | "place" | "user" | "itinerary";
 };
 
 export type PresignedUrlResponse = {
