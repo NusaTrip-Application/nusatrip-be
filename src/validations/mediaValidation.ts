@@ -11,8 +11,8 @@ export const createPresignedUrlSchema = z.object({
 		.int("Size must be an integer")
 		.min(1, "Size is required")
 		.positive("Size must be greater than 0"),
-	folder: z.enum(["location", "place", "user"], {
-		message: "Invalid folder type. Must be 'location', 'place', or 'user'",
+	folder: z.enum(["location", "place", "user", "itinerary"], {
+		message: "Invalid folder type. Must be 'location', 'place', 'itinerary' or 'user'",
 	}),
 });
 
