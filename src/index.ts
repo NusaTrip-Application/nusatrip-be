@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { env } from "../src/config/env";
-import swaggerUi from "swagger-ui-express";
 import { errorHandler } from "./middlewares/errorHandler";
 import authRoute from "./routes/authRoute";
 import cronRoute from "./routes/cronRoute";
@@ -38,7 +37,36 @@ app.get("/api/docs.json", (_req, res) => {
 	res.status(200).send(swaggerSpec);
 });
 
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api/docs", (_req, res) => {
+	res.setHeader("Content-Type", "text/html");
+	res.status(200).send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NusaTrip API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      SwaggerUIBundle({
+        url: "/api/docs.json",
+        dom_id: "#swagger-ui",
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout"
+      });
+    };
+  </script>
+</body>
+</html>
+`);
+});
 
 app.use("/api/auth", authRoute);
 app.use("/api/accounts", accountRouter);
