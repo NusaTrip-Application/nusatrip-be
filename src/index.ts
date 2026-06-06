@@ -23,7 +23,11 @@ const app = express();
 
 app.use(
 	cors({
-		origin: [],
+		origin: [
+			"http://localhost:3000",
+			"http://localhost:5173",
+			"https://nusatrip-fe.vercel.app",
+		],
 		credentials: true,
 		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization", "Accept"],
@@ -34,7 +38,8 @@ app.use(express.json());
 
 app.get("/api/docs.json", (_req, res) => {
 	res.setHeader("Content-Type", "application/json");
-	res.status(200).send(swaggerSpec);
+	res.setHeader("Access-Control-Allow-Origin", "*");
+	res.status(200).send(JSON.stringify(swaggerSpec));
 });
 
 app.get("/api/docs", (_req, res) => {
@@ -45,6 +50,9 @@ app.get("/api/docs", (_req, res) => {
 <head>
   <title>NusaTrip API Documentation</title>
   <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <style>
+    body { margin: 0; padding: 0; }
+  </style>
 </head>
 <body>
   <div id="swagger-ui"></div>
@@ -59,7 +67,10 @@ app.get("/api/docs", (_req, res) => {
           SwaggerUIBundle.presets.apis,
           SwaggerUIStandalonePreset
         ],
-        layout: "StandaloneLayout"
+        layout: "StandaloneLayout",
+        deepLinking: true,
+        showExtensions: true,
+        showCommonExtensions: true
       });
     };
   </script>
