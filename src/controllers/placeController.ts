@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import type { ValidationRequest } from "../types/authType";
 import {
 	adminGetPlacesQuerySchema,
 	createPlaceSchema,
@@ -24,10 +25,10 @@ class PlaceController {
 		}
 	}
 
-	static async createPlace(req: Request, res: Response, next: NextFunction) {
+	static async createPlace(req: ValidationRequest, res: Response, next: NextFunction) {
 		try {
 			const validatedData = createPlaceSchema.parse(req.body);
-			const result = await PlaceService.createPlace(validatedData);
+			const result = await PlaceService.createPlace(req.user!.id, validatedData);
 
 			return successResponse(res, result, "Place created successfully", 201);
 		} catch (error) {
@@ -35,11 +36,11 @@ class PlaceController {
 		}
 	}
 
-	static async updatePlace(req: Request, res: Response, next: NextFunction) {
+	static async updatePlace(req: ValidationRequest, res: Response, next: NextFunction) {
 		try {
 			const { placeId } = getPlaceByIdParamsSchema.parse(req.params);
 			const validatedData = updatePlaceSchema.parse(req.body);
-			const result = await PlaceService.updatePlace(placeId, validatedData);
+			const result = await PlaceService.updatePlace(req.user!.id, placeId, validatedData);
 
 			return successResponse(res, result, "Place updated successfully");
 		} catch (error) {

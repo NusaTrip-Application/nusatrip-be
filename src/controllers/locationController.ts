@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import type { ValidationRequest } from "../types/authType";
 import {
 	adminGetLocationsQuerySchema,
 	changeLocationStatusSchema,
@@ -100,13 +101,13 @@ class LocationController {
 	}
 
 	static async createLocation(
-		req: Request,
+		req: ValidationRequest,
 		res: Response,
 		next: NextFunction,
 	) {
 		try {
 			const validatedData = createLocationSchema.parse(req.body);
-			const result = await LocationService.createLocation(validatedData);
+			const result = await LocationService.createLocation(req.user!.id, validatedData);
 
 			return successResponse(res, result, "Location created successfully", 201);
 		} catch (error) {
@@ -115,14 +116,14 @@ class LocationController {
 	}
 
 	static async updateLocation(
-		req: Request,
+		req: ValidationRequest,
 		res: Response,
 		next: NextFunction,
 	) {
 		try {
 			const { locationId } = getLocationByIdParamsSchema.parse(req.params);
 			const validatedData = updateLocationSchema.parse(req.body);
-			const result = await LocationService.updateLocation(locationId, validatedData);
+			const result = await LocationService.updateLocation(req.user!.id, locationId, validatedData);
 
 			return successResponse(res, result, "Location updated successfully");
 		} catch (error) {

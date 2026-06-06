@@ -59,6 +59,7 @@ export const updateItinerarySchema = z
 		interestSummary: interestCategoryIdsSchema.optional(),
 		budgetPreference: z.coerce.number().min(0).optional(),
 		visibilityStatus: visibilityStatusSchema.optional(),
+		bannerImageUrl: z.string().trim().optional(),
 	})
 	.superRefine((value, ctx) => {
 		if (Object.keys(value).length === 0) {

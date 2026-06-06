@@ -19,7 +19,7 @@ const optionalStringSchema = (label: string, max: number) =>
 	z.string().trim().max(max, `${label} must not exceed ${max} characters`).optional().or(z.literal(""));
 
 const imageSchema = z.object({
-	imageUrl: z.string().url("Image URL must be a valid URL"),
+	imageUrl: z.string(),
 	displayOrder: z.coerce.number().int().min(1).default(1),
 });
 
