@@ -11,6 +11,7 @@ import type {
 	UpdateAccountPayload,
 } from "../types/accountType";
 import type { UserData } from "../types/authType";
+import MediaService from "./mediaService";
 
 class AccountService {
 	static async registerAccount(payload: RegisterAccountPayload) {
@@ -125,6 +126,30 @@ class AccountService {
 
 			if (existingUser && existingUser.userId !== userId) {
 				throw new AppError("Email is already registered", 409);
+			}
+		}
+
+		if (preparedPayload.profilePhotoUrl !== undefined) {
+			if (preparedPayload.profilePhotoUrl === null) {
+				preparedPayload.profilePhotoUrl = null;
+				if (account.profilePhotoUrl) {
+					await MediaService.deleteFile(account.profilePhotoUrl);
+				}
+			} else {
+				await MediaService.validateTempKey(
+					preparedPayload.profilePhotoUrl as string,
+					currentUser.id,
+					"user",
+				);
+				const finalKey = await MediaService.promoteToFinal(
+					preparedPayload.profilePhotoUrl as string,
+					userId,
+					"user",
+				);
+				preparedPayload.profilePhotoUrl = finalKey;
+				if (account.profilePhotoUrl) {
+					await MediaService.deleteFile(account.profilePhotoUrl);
+				}
 			}
 		}
 

@@ -43,7 +43,6 @@ export const createLocationSchema = z.object({
 		.or(z.literal("")),
 	imageUrl: z
 		.string()
-		.url("Image URL must be a valid URL")
 		.optional()
 		.or(z.literal("")),
 });
@@ -65,7 +64,6 @@ export const updateLocationSchema = z
 			.or(z.literal("")),
 		imageUrl: z
 			.string()
-			.url("Image URL must be a valid URL")
 			.optional()
 			.or(z.literal("")),
 	})
