@@ -123,6 +123,7 @@ export const getSwaggerSpec = (): object => {
 							locationName: { type: "string", minLength: 3, maxLength: 120 },
 							description: { type: "string", nullable: true },
 							imageUrl: { type: "string", nullable: true },
+							isActive: { type: "boolean", nullable: true },
 						},
 					},
 					UpdateLocationRequest: {
@@ -132,6 +133,7 @@ export const getSwaggerSpec = (): object => {
 							locationName: { type: "string" },
 							description: { type: "string", nullable: true },
 							imageUrl: { type: "string", nullable: true },
+							isActive: { type: "boolean", nullable: true },
 						},
 					},
 					ChangeLocationStatusRequest: {
@@ -151,12 +153,17 @@ export const getSwaggerSpec = (): object => {
 								items: { type: "string", format: "uuid" },
 							},
 							address: { type: "string" },
-							operatingHours: { type: "array", items: { type: "object" } },
+							operatingHours: {
+								type: "array",
+								items: { type: "object" },
+								nullable: true,
+							},
 							images: {
 								type: "array",
 								items: { type: "object" },
 								nullable: true,
 							},
+							isActive: { type: "boolean", nullable: true },
 						},
 					},
 					UpdatePlaceRequest: {
