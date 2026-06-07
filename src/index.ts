@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { env } from "../src/config/env";
+import swaggerUi from "swagger-ui-express";
 import { errorHandler } from "./middlewares/errorHandler";
 import authRoute from "./routes/authRoute";
 import cronRoute from "./routes/cronRoute";
@@ -36,48 +37,14 @@ app.use(
 
 app.use(express.json());
 
-app.get("/api/docs.json", (_req, res) => {
-	res.setHeader("Content-Type", "application/json");
-	res.setHeader("Access-Control-Allow-Origin", "*");
-	res.status(200).send(JSON.stringify(swaggerSpec));
-});
+if (env.isDevelopment) {
+	app.get("/api/docs.json", (_req, res) => {
+		res.setHeader("Content-Type", "application/json");
+		res.status(200).send(swaggerSpec);
+	});
 
-app.get("/api/docs", (_req, res) => {
-	res.setHeader("Content-Type", "text/html");
-	res.status(200).send(`
-<!DOCTYPE html>
-<html>
-<head>
-  <title>NusaTrip API Documentation</title>
-  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
-  <style>
-    body { margin: 0; padding: 0; }
-  </style>
-</head>
-<body>
-  <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
-  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
-  <script>
-    window.onload = function() {
-      SwaggerUIBundle({
-        url: "/api/docs.json",
-        dom_id: "#swagger-ui",
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        layout: "StandaloneLayout",
-        deepLinking: true,
-        showExtensions: true,
-        showCommonExtensions: true
-      });
-    };
-  </script>
-</body>
-</html>
-`);
-});
+	app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 app.use("/api/auth", authRoute);
 app.use("/api/accounts", accountRouter);
@@ -106,7 +73,7 @@ app.get("/health", (_req, res) => {
 
 app.use(errorHandler);
 
-const PORT = env.PORT || 3000;
+const PORT = env.PORT || 8000;
 
 if (!env.isTest) {
 	app.listen(PORT, () => {

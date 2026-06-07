@@ -45,6 +45,7 @@ export const createLocationSchema = z.object({
 		.string()
 		.optional()
 		.or(z.literal("")),
+	isActive: z.boolean().default(true),
 });
 
 export const updateLocationSchema = z
@@ -66,6 +67,7 @@ export const updateLocationSchema = z
 			.string()
 			.optional()
 			.or(z.literal("")),
+		isActive: z.boolean().optional(),
 	})
 	.refine((data) => Object.keys(data).length > 0, {
 		message: "At least one field must be provided",

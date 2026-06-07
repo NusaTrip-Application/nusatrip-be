@@ -81,6 +81,7 @@ const basePlaceSchema = z.object({
 	ratingCount: z.coerce.number().int().min(0).optional(),
 	operatingHours: z.array(operatingHourSchema).min(1, "At least one operating hour is required"),
 	images: z.array(imageSchema).min(0).optional(),
+	isActive: z.boolean().default(true),
 }).superRefine((value, ctx) => {
 	validatePriceRange(value.priceMin, value.priceMax, ctx);
 });
