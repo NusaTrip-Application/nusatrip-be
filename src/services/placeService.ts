@@ -253,14 +253,20 @@ function buildPlaceCreateInput(
 				},
 			})),
 		},
-		operatingHours: {
-			create: payload.operatingHours.map((item) => ({
-				dayOfWeek: item.dayOfWeek,
-				isClosed: item.isClosed,
-				...(item.openTime ? { openTime: toTimeDate(item.openTime) } : {}),
-				...(item.closeTime ? { closeTime: toTimeDate(item.closeTime) } : {}),
-			})),
-		},
+		...(payload.operatingHours
+			? {
+					operatingHours: {
+						create: payload.operatingHours.map((item) => ({
+							dayOfWeek: item.dayOfWeek,
+							isClosed: item.isClosed,
+							...(item.openTime ? { openTime: toTimeDate(item.openTime) } : {}),
+							...(item.closeTime
+								? { closeTime: toTimeDate(item.closeTime) }
+								: {}),
+						})),
+					},
+				}
+			: {}),
 		...(payload.images
 			? {
 					images: {
@@ -445,6 +451,7 @@ function mapPlaceDetail(place: PlaceDetail) {
 			openTime: item.openTime ? toTimeString(item.openTime) : null,
 			closeTime: item.closeTime ? toTimeString(item.closeTime) : null,
 		})),
+		images: place.images,
 	};
 }
 

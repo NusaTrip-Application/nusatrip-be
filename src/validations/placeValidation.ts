@@ -79,7 +79,7 @@ const basePlaceSchema = z.object({
 	contactPhoneNumber: optionalStringSchema("Contact phone number", 50),
 	ratingValue: z.coerce.number().min(0).max(5).optional(),
 	ratingCount: z.coerce.number().int().min(0).optional(),
-	operatingHours: z.array(operatingHourSchema).min(1, "At least one operating hour is required"),
+	operatingHours: z.array(operatingHourSchema).optional(),
 	images: z.array(imageSchema).min(0).optional(),
 	isActive: z.boolean().default(true),
 }).superRefine((value, ctx) => {
@@ -118,7 +118,7 @@ export const updatePlaceSchema = z
 		contactPhoneNumber: optionalStringSchema("Contact phone number", 50),
 		ratingValue: z.coerce.number().min(0).max(5).optional(),
 		ratingCount: z.coerce.number().int().min(0).optional(),
-		operatingHours: z.array(operatingHourSchema).min(1, "At least one operating hour is required").optional(),
+		operatingHours: z.array(operatingHourSchema).optional(),
 		images: z.array(imageSchema).min(0).optional(),
 		isActive: z.boolean().optional(),
 	})
