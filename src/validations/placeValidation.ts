@@ -19,7 +19,7 @@ const optionalStringSchema = (label: string, max: number) =>
 	z.string().trim().max(max, `${label} must not exceed ${max} characters`).optional().or(z.literal(""));
 
 const imageSchema = z.object({
-	imageUrl: z.string().url("Image URL must be a valid URL"),
+	imageUrl: z.string(),
 	displayOrder: z.coerce.number().int().min(1).default(1),
 });
 
@@ -79,8 +79,9 @@ const basePlaceSchema = z.object({
 	contactPhoneNumber: optionalStringSchema("Contact phone number", 50),
 	ratingValue: z.coerce.number().min(0).max(5).optional(),
 	ratingCount: z.coerce.number().int().min(0).optional(),
-	operatingHours: z.array(operatingHourSchema).min(1, "At least one operating hour is required"),
+	operatingHours: z.array(operatingHourSchema).optional(),
 	images: z.array(imageSchema).min(0).optional(),
+	isActive: z.boolean().default(true),
 }).superRefine((value, ctx) => {
 	validatePriceRange(value.priceMin, value.priceMax, ctx);
 });
@@ -117,7 +118,7 @@ export const updatePlaceSchema = z
 		contactPhoneNumber: optionalStringSchema("Contact phone number", 50),
 		ratingValue: z.coerce.number().min(0).max(5).optional(),
 		ratingCount: z.coerce.number().int().min(0).optional(),
-		operatingHours: z.array(operatingHourSchema).min(1, "At least one operating hour is required").optional(),
+		operatingHours: z.array(operatingHourSchema).optional(),
 		images: z.array(imageSchema).min(0).optional(),
 		isActive: z.boolean().optional(),
 	})

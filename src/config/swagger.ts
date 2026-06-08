@@ -86,7 +86,7 @@ export const getSwaggerSpec = (): object => {
 							password: { type: "string", minLength: 8, maxLength: 100 },
 							phoneNumber: { type: "string" },
 							instagramUsername: { type: "string" },
-							profilePhotoUrl: { type: "string", format: "uri" },
+							profilePhotoUrl: { type: "string" },
 						},
 					},
 					AdminCreateUserRequest: {
@@ -98,7 +98,7 @@ export const getSwaggerSpec = (): object => {
 							password: { type: "string", minLength: 8 },
 							phoneNumber: { type: "string" },
 							instagramUsername: { type: "string" },
-							profilePhotoUrl: { type: "string", format: "uri" },
+							profilePhotoUrl: { type: "string" },
 							accountStatus: {
 								type: "string",
 								description: "AccountStatus enum",
@@ -122,7 +122,8 @@ export const getSwaggerSpec = (): object => {
 							provinceId: { type: "string", format: "uuid" },
 							locationName: { type: "string", minLength: 3, maxLength: 120 },
 							description: { type: "string", nullable: true },
-							imageUrl: { type: "string", format: "uri", nullable: true },
+							imageUrl: { type: "string", nullable: true },
+							isActive: { type: "boolean", nullable: true },
 						},
 					},
 					UpdateLocationRequest: {
@@ -131,7 +132,8 @@ export const getSwaggerSpec = (): object => {
 							provinceId: { type: "string", format: "uuid" },
 							locationName: { type: "string" },
 							description: { type: "string", nullable: true },
-							imageUrl: { type: "string", format: "uri", nullable: true },
+							imageUrl: { type: "string", nullable: true },
+							isActive: { type: "boolean", nullable: true },
 						},
 					},
 					ChangeLocationStatusRequest: {
@@ -151,12 +153,17 @@ export const getSwaggerSpec = (): object => {
 								items: { type: "string", format: "uuid" },
 							},
 							address: { type: "string" },
-							operatingHours: { type: "array", items: { type: "object" } },
+							operatingHours: {
+								type: "array",
+								items: { type: "object" },
+								nullable: true,
+							},
 							images: {
 								type: "array",
 								items: { type: "object" },
 								nullable: true,
 							},
+							isActive: { type: "boolean", nullable: true },
 						},
 					},
 					UpdatePlaceRequest: {
@@ -213,6 +220,7 @@ export const getSwaggerSpec = (): object => {
 							},
 							budgetPreference: { type: "number" },
 							visibilityStatus: { type: "string" },
+							bannerImageUrl: { type: "string" },
 						},
 					},
 					UpdateBudgetRequest: {

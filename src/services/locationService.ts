@@ -8,6 +8,7 @@ import type {
 	UpdateLocationPayload,
 } from "../types/locationType";
 import { AppError } from "../middlewares/errorHandler";
+import MediaService from "./mediaService";
 
 class LocationService {
 	static async getActiveProvinces() {
@@ -76,7 +77,7 @@ class LocationService {
 		return LocationRepository.getLocationSummary();
 	}
 
-	static async createLocation(payload: CreateLocationPayload) {
+	static async createLocation(currentUserId: string, payload: CreateLocationPayload) {
 		await ensureActiveProvinceExists(payload.provinceId);
 		const existingLocation = await LocationRepository.findByName(payload.locationName);
 
@@ -92,13 +93,25 @@ class LocationService {
 			},
 			locationName: payload.locationName,
 			...(payload.description ? { description: payload.description } : {}),
-			...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
 		};
 
-		return LocationRepository.createLocation(createPayload);
+		const location = await LocationRepository.createLocation(createPayload);
+
+		if (payload.imageUrl) {
+			await MediaService.validateTempKey(payload.imageUrl, currentUserId, "location");
+			const finalKey = await MediaService.promoteToFinal(
+				payload.imageUrl,
+				location.locationId,
+				"location",
+			);
+			await LocationRepository.updateLocationById(location.locationId, { imageUrl: finalKey });
+			location.imageUrl = finalKey;
+		}
+
+		return location;
 	}
 
-	static async updateLocation(locationId: string, payload: UpdateLocationPayload) {
+	static async updateLocation(currentUserId: string, locationId: string, payload: UpdateLocationPayload) {
 		const location = await this.getLocationById(locationId);
 		const normalizedPayload = normalizeOptionalStringFields(payload);
 		if (normalizedPayload.provinceId) {
@@ -118,11 +131,35 @@ class LocationService {
 			}
 		}
 
+		if (normalizedPayload.imageUrl !== undefined) {
+			if (normalizedPayload.imageUrl === null) {
+				updatePayload.imageUrl = null;
+				if (location.imageUrl) {
+					await MediaService.deleteFile(location.imageUrl);
+				}
+			} else {
+				await MediaService.validateTempKey(
+					normalizedPayload.imageUrl as string,
+					currentUserId,
+					"location",
+				);
+				const finalKey = await MediaService.promoteToFinal(
+					normalizedPayload.imageUrl as string,
+					locationId,
+					"location",
+				);
+				updatePayload.imageUrl = finalKey;
+				if (location.imageUrl) {
+					await MediaService.deleteFile(location.imageUrl);
+				}
+			}
+		}
+
 		return LocationRepository.updateLocationById(locationId, updatePayload);
 	}
 
 	static async deleteLocation(locationId: string) {
-		await this.getLocationById(locationId);
+		const location = await this.getLocationById(locationId);
 
 		const usage = await LocationRepository.countLocationUsage(locationId);
 
@@ -131,6 +168,10 @@ class LocationService {
 				"Location cannot be deleted because it is still used by places or itineraries",
 				409,
 			);
+		}
+
+		if (location.imageUrl) {
+			await MediaService.deleteFile(location.imageUrl);
 		}
 
 		return LocationRepository.deleteLocationById(locationId);
@@ -171,7 +212,7 @@ function toLocationUpdateInput(
 ): Prisma.LocationUpdateInput {
 	const entries = Object.entries(payload).filter(([, value]) => value !== undefined);
 	const updatePayload = Object.fromEntries(
-		entries.filter(([key]) => key !== "provinceId"),
+		entries.filter(([key]) => key !== "provinceId" && key !== "imageUrl"),
 	) as Prisma.LocationUpdateInput;
 
 	if (typeof payload.provinceId === "string") {

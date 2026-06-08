@@ -143,7 +143,7 @@ class DashboardRepository {
 						savedReferences: true,
 					},
 				},
-				publishedItineraryReviews: {
+				reviews: {
 					take: 1,
 					orderBy: { createdAt: "desc" },
 					select: {
@@ -156,7 +156,7 @@ class DashboardRepository {
 		});
 
 		return itineraries.map((it) => {
-			const latestReview = it.publishedItineraryReviews[0] as { rating: unknown } | undefined;
+			const latestReview = it.reviews[0] as { rating: unknown } | undefined;
 			return {
 				itineraryId: it.itineraryId,
 				title: it.title,

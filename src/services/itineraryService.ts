@@ -18,6 +18,7 @@ import type {
 	UpdateItineraryPayload,
 } from "../types/itineraryType";
 import type { UserData } from "../types/authType";
+import MediaService from "./mediaService";
 
 class ItineraryService {
 	static async createItinerary(userId: string, payload: CreateItineraryPayload) {
@@ -91,6 +92,30 @@ class ItineraryService {
 
 		if (normalizedPayload.visibilityStatus !== undefined) {
 			updatePayload.visibilityStatus = normalizedPayload.visibilityStatus;
+		}
+
+		if (normalizedPayload.bannerImageUrl !== undefined) {
+			if (normalizedPayload.bannerImageUrl === null) {
+				updatePayload.bannerImageUrl = null;
+				if (itinerary.bannerImageUrl) {
+					await MediaService.deleteFile(itinerary.bannerImageUrl);
+				}
+			} else {
+				await MediaService.validateTempKey(
+					normalizedPayload.bannerImageUrl,
+					currentUser.id,
+					"itinerary",
+				);
+				const finalKey = await MediaService.promoteToFinal(
+					normalizedPayload.bannerImageUrl,
+					itineraryId,
+					"itinerary",
+				);
+				updatePayload.bannerImageUrl = finalKey;
+				if (itinerary.bannerImageUrl) {
+					await MediaService.deleteFile(itinerary.bannerImageUrl);
+				}
+			}
 		}
 
 		if (normalizedPayload.locationId) {

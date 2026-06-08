@@ -1,6 +1,7 @@
 import { DayOfWeek, PlaceCategoryEnum } from "../../generated/prisma/enums";
 import type { Prisma } from "../../generated/prisma/client";
 import { AppError } from "../middlewares/errorHandler";
+import MediaService from "./mediaService";
 import LocationRepository from "../repositories/locationRepository";
 import PlaceRepository, {
 	type PlaceDetail,
@@ -18,17 +19,53 @@ class PlaceService {
 		return PlaceRepository.findActiveCategories();
 	}
 
-	static async createPlace(payload: CreatePlacePayload) {
+	static async createPlace(currentUserId: string, payload: CreatePlacePayload) {
 		await ensureActiveLocationExists(payload.locationId);
 		await ensureActiveCategoryIdsExist(payload.categories);
 
 		const createPayload = buildPlaceCreateInput(payload);
 
-		return PlaceRepository.createPlace(createPayload);
+		const place = await PlaceRepository.createPlace(createPayload);
+
+		if (payload.images && payload.images.length > 0) {
+			const finalImages: Array<{ imageUrl: string; displayOrder: number }> = [];
+			for (const img of payload.images) {
+				if (img.imageUrl.startsWith("temp/")) {
+					await MediaService.validateTempKey(img.imageUrl, currentUserId, "place");
+					const finalKey = await MediaService.promoteToFinal(
+						img.imageUrl,
+						place.placeId,
+						"place",
+					);
+					finalImages.push({ imageUrl: finalKey, displayOrder: img.displayOrder });
+					await MediaService.deleteFile(img.imageUrl);
+				} else {
+					finalImages.push(img);
+				}
+			}
+			
+			await PlaceRepository.updatePlaceById(place.placeId, {
+				images: {
+					deleteMany: {},
+					create: finalImages.map((item) => ({
+						imageUrl: item.imageUrl,
+						displayOrder: item.displayOrder,
+					})),
+				},
+			});
+
+			return this.getPlaceById(place.placeId);
+		}
+
+		return place;
 	}
 
-	static async updatePlace(placeId: string, payload: UpdatePlacePayload) {
-		await this.getPlaceById(placeId);
+	static async updatePlace(currentUserId: string, placeId: string, payload: UpdatePlacePayload) {
+		const oldPlace = await PlaceRepository.findById(placeId);
+
+		if (!oldPlace) {
+			throw new AppError("Place not found", 404);
+		}
 
 		if (payload.locationId) {
 			await ensureActiveLocationExists(payload.locationId);
@@ -38,13 +75,45 @@ class PlaceService {
 			await ensureActiveCategoryIdsExist(payload.categories);
 		}
 
+		if (payload.images) {
+			const finalImages: Array<{ imageUrl: string; displayOrder: number }> = [];
+			
+			for (const img of payload.images) {
+				if (img.imageUrl.startsWith("temp/")) {
+					await MediaService.validateTempKey(img.imageUrl, currentUserId, "place");
+					const finalKey = await MediaService.promoteToFinal(
+						img.imageUrl,
+						placeId,
+						"place",
+					);
+					finalImages.push({ imageUrl: finalKey, displayOrder: img.displayOrder });
+					await MediaService.deleteFile(img.imageUrl);
+				} else {
+					finalImages.push(img);
+				}
+			}
+
+			const finalImageUrls = new Set(finalImages.map(img => img.imageUrl));
+			for (const oldImg of oldPlace.images) {
+				if (!finalImageUrls.has(oldImg.imageUrl)) {
+					await MediaService.deleteFile(oldImg.imageUrl);
+				}
+			}
+
+			payload.images = finalImages;
+		}
+
 		const updatePayload = buildPlaceUpdateInput(payload);
 
 		return PlaceRepository.updatePlaceById(placeId, updatePayload);
 	}
 
 	static async deletePlace(placeId: string) {
-		await this.getPlaceById(placeId);
+		const place = await PlaceRepository.findById(placeId);
+
+		if (!place) {
+			throw new AppError("Place not found", 404);
+		}
 
 		const usageCount = await PlaceRepository.countPlaceUsage(placeId);
 		if (usageCount > 0) {
@@ -52,6 +121,12 @@ class PlaceService {
 				"Place cannot be deleted because it is still used by itinerary items",
 				409,
 			);
+		}
+
+		if (place.images && place.images.length > 0) {
+			for (const img of place.images) {
+				await MediaService.deleteFile(img.imageUrl);
+			}
 		}
 
 		return PlaceRepository.deletePlaceById(placeId);
@@ -178,14 +253,20 @@ function buildPlaceCreateInput(
 				},
 			})),
 		},
-		operatingHours: {
-			create: payload.operatingHours.map((item) => ({
-				dayOfWeek: item.dayOfWeek,
-				isClosed: item.isClosed,
-				...(item.openTime ? { openTime: toTimeDate(item.openTime) } : {}),
-				...(item.closeTime ? { closeTime: toTimeDate(item.closeTime) } : {}),
-			})),
-		},
+		...(payload.operatingHours
+			? {
+					operatingHours: {
+						create: payload.operatingHours.map((item) => ({
+							dayOfWeek: item.dayOfWeek,
+							isClosed: item.isClosed,
+							...(item.openTime ? { openTime: toTimeDate(item.openTime) } : {}),
+							...(item.closeTime
+								? { closeTime: toTimeDate(item.closeTime) }
+								: {}),
+						})),
+					},
+				}
+			: {}),
 		...(payload.images
 			? {
 					images: {
@@ -370,6 +451,7 @@ function mapPlaceDetail(place: PlaceDetail) {
 			openTime: item.openTime ? toTimeString(item.openTime) : null,
 			closeTime: item.closeTime ? toTimeString(item.closeTime) : null,
 		})),
+		images: place.images,
 	};
 }
 

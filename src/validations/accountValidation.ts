@@ -55,7 +55,6 @@ export const updateAccountSchema = z
 			.or(z.literal("")),
 		profilePhotoUrl: z
 			.string()
-			.url("Profile photo url must be a valid URL")
 			.optional()
 			.or(z.literal("")),
 	})
@@ -104,7 +103,7 @@ export const adminCreateUserSchema = z.object({
 		.min(3, "Instagram username must be at least 3 characters")
 		.max(100, "Instagram username must not exceed 100 characters")
 		.optional(),
-	profilePhotoUrl: z.string().url("Profile photo url must be a valid URL").optional(),
+	profilePhotoUrl: z.string().optional(),
 	accountStatus: z.enum(AccountStatus).optional(),
 });
 
