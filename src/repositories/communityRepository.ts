@@ -51,17 +51,15 @@ class CommunityRepository {
 				FROM itineraries i
 				LEFT JOIN published_itinerary_reviews r ON i.itinerary_id = r.itinerary_id
 				LEFT JOIN locations l ON i.location_id = l.location_id
-				WHERE i.visibility_status = 'PUBLISHED' ${searchCond}
+				WHERE i.visibility_status = 'published' ${searchCond}
 				GROUP BY i.itinerary_id
 				ORDER BY avg_rating DESC, i.created_at DESC
-				LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+				LIMIT ${limitVal} OFFSET ${offsetVal}
 			`;
 
 			const rawResults = await prisma.$queryRawUnsafe<{ itineraryId: string }[]>(
 				sqlQuery,
-				...params,
-				limitVal,
-				offsetVal
+				...params
 			);
 
 			const ids = rawResults.map((r) => r.itineraryId);
