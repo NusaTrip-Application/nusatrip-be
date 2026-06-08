@@ -30,37 +30,103 @@ class CommunityRepository {
 			];
 		}
 
-		const orderBy: Prisma.ItineraryOrderByWithRelationInput =
-			query.filter === "popular"
-				? ({ savedReferences: { _count: "desc" } } as Prisma.ItineraryOrderByWithRelationInput)
-				: { createdAt: "desc" };
+		let items: any[] = [];
+		let totalItems = 0;
 
-		const [items, totalItems] = await prisma.$transaction([
-			prisma.itinerary.findMany({
-				where,
-				include: {
-					location: true,
-					user: {
-						select: {
-							userId: true,
-							fullName: true,
-							profilePhotoUrl: true,
+		if (query.filter === "popular") {
+			totalItems = await prisma.itinerary.count({ where });
+
+			let searchCond = "";
+			const params: any[] = [];
+			if (query.search) {
+				searchCond = `AND (i.title ILIKE $1 OR l.location_name ILIKE $1)`;
+				params.push(`%${query.search}%`);
+			}
+
+			const limitVal = query.limit;
+			const offsetVal = skip;
+
+			const sqlQuery = `
+				SELECT i.itinerary_id as "itineraryId", COALESCE(AVG(r.rating), 0) as avg_rating
+				FROM itineraries i
+				LEFT JOIN published_itinerary_reviews r ON i.itinerary_id = r.itinerary_id
+				LEFT JOIN locations l ON i.location_id = l.location_id
+				WHERE i.visibility_status = 'PUBLISHED' ${searchCond}
+				GROUP BY i.itinerary_id
+				ORDER BY avg_rating DESC, i.created_at DESC
+				LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+			`;
+
+			const rawResults = await prisma.$queryRawUnsafe<{ itineraryId: string }[]>(
+				sqlQuery,
+				...params,
+				limitVal,
+				offsetVal
+			);
+
+			const ids = rawResults.map((r) => r.itineraryId);
+
+			if (ids.length > 0) {
+				const fetchedItems = await prisma.itinerary.findMany({
+					where: {
+						itineraryId: { in: ids },
+					},
+					include: {
+						location: true,
+						user: {
+							select: {
+								userId: true,
+								fullName: true,
+								profilePhotoUrl: true,
+							},
+						},
+						_count: {
+							select: {
+								reviews: true,
+								savedReferences: true,
+								items: true,
+							},
 						},
 					},
-					_count: {
-						select: {
-							reviews: true,
-							savedReferences: true,
-							items: true,
+				});
+
+				// Preserve raw query ordering
+				items = ids
+					.map((id) => fetchedItems.find((item) => item.itineraryId === id))
+					.filter(Boolean);
+			}
+		} else {
+			const orderBy: Prisma.ItineraryOrderByWithRelationInput = { createdAt: "desc" };
+
+			const [fetchedItems, count] = await prisma.$transaction([
+				prisma.itinerary.findMany({
+					where,
+					include: {
+						location: true,
+						user: {
+							select: {
+								userId: true,
+								fullName: true,
+								profilePhotoUrl: true,
+							},
+						},
+						_count: {
+							select: {
+								reviews: true,
+								savedReferences: true,
+								items: true,
+							},
 						},
 					},
-				},
-				orderBy,
-				skip,
-				take: query.limit,
-			}),
-			prisma.itinerary.count({ where }),
-		]);
+					orderBy,
+					skip,
+					take: query.limit,
+				}),
+				prisma.itinerary.count({ where }),
+			]);
+			items = fetchedItems;
+			totalItems = count;
+		}
 
 		return { items, totalItems };
 	}
