@@ -519,4 +519,55 @@
  *             example:
  *               success: false
  *               message: User not found
+ *
+ *   delete:
+ *     tags: [Admin Accounts]
+ *     summary: Admin delete user
+ *     description: Permanently deletes a user account and all associated data. Admin accounts cannot be deleted.
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       204:
+ *         description: User account deleted successfully.
+ *       400:
+ *         description: Admin account cannot be deleted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *             example:
+ *               success: false
+ *               message: Admin account cannot be deleted
+ *       401:
+ *         description: Unauthorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *             example:
+ *               success: false
+ *               message: Token not found
+ *       403:
+ *         description: Forbidden.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *             example:
+ *               success: false
+ *               message: Admin access required
+ *       404:
+ *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *             example:
+ *               success: false
+ *               message: User not found
  */

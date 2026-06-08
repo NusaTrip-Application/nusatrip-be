@@ -24,5 +24,9 @@ adminRouter.patch(
 	"/users/:userId/status",
 	AccountController.adminChangeUserStatus,
 );
+adminRouter.delete(
+	"/users/:userId",
+	AccountController.adminDeleteUser,
+);
 
 export { router as accountRouter, adminRouter as adminAccountRouter };

@@ -170,6 +170,39 @@ class AccountController {
 			next(error);
 		}
 	}
+
+	static async deleteMyAccount(
+		req: ValidationRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const user = AccountController.requireAuthenticatedUser(req);
+
+			await AccountService.deleteAccount(user, user.id);
+
+			return res.status(204).send();
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async adminDeleteUser(
+		req: ValidationRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			const user = AccountController.requireAuthenticatedUser(req);
+
+			const { userId } = getAccountByIdParamsSchema.parse(req.params);
+			await AccountService.deleteAccount(user, userId);
+
+			return res.status(204).send();
+		} catch (error) {
+			next(error);
+		}
+	}
 }
 
 export default AccountController;
