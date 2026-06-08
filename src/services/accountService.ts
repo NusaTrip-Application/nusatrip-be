@@ -180,6 +180,27 @@ class AccountService {
 
 		return AccountRepository.updateUserStatus(userId, payload.accountStatus);
 	}
+
+	static async deleteAccount(currentUser: UserData, userId: string) {
+		const isOwnAccount = currentUser.id === userId;
+		const isAdmin = currentUser.role === UserRole.ADMIN;
+
+		if (!isOwnAccount && !isAdmin) {
+			throw new AppError("Forbidden", 403);
+		}
+
+		const account = await this.getAccountById(userId);
+
+		if (account.role === UserRole.ADMIN) {
+			throw new AppError("Admin account cannot be deleted", 400);
+		}
+
+		if (account.profilePhotoUrl) {
+			await MediaService.deleteFile(account.profilePhotoUrl);
+		}
+
+		return AccountRepository.deleteAccountById(userId);
+	}
 }
 
 function normalizeOptionalStringFields<T extends Record<string, unknown>>(

@@ -118,6 +118,12 @@ class AccountRepository {
 			select: ownAccountSelect,
 		});
 	}
+
+	static async deleteAccountById(userId: string) {
+		return prisma.user.delete({
+			where: { userId },
+		});
+	}
 }
 
 function mapAdminUserSort(sortBy: AdminGetUsersQuery["sortBy"]): Prisma.UserOrderByWithRelationInput {
