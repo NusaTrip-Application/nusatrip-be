@@ -342,7 +342,8 @@ class ItineraryService {
 
 		if (
 			currentUser.role !== UserRole.ADMIN &&
-			itinerary.userId !== currentUser.id
+			itinerary.userId !== currentUser.id &&
+			itinerary.visibilityStatus !== VisibilityStatus.PUBLISHED
 		) {
 			throw new AppError("Forbidden", 403);
 		}

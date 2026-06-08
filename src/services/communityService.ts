@@ -65,7 +65,18 @@ class CommunityService {
 		);
 
 		if (existingSave) {
-			throw new AppError("Itinerary is already saved", 409);
+			await prisma.savedReference.delete({
+				where: {
+					userId_itineraryId: {
+						userId: currentUser.id,
+						itineraryId,
+					},
+				},
+			});
+			return {
+				saved: false,
+				itineraryId,
+			};
 		}
 
 		await SavedReferenceRepository.createSavedItinerary(currentUser.id, itineraryId);

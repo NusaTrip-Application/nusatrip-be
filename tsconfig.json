@@ -23,9 +23,7 @@
 		"jsx": "react-jsx",
 		"esModuleInterop": true,
 		"isolatedModules": true,
-		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",
-		"ignoreDeprecations": "6.0",
 		"skipLibCheck": true
 	}
 }
